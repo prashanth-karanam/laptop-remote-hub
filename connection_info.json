@@ -1,0 +1,15 @@
+{
+  "event": "hub_beacon",
+  "device_id": "prasanth-asus-praashu",
+  "device_name": "Praashu (PRASANTH-ASUS)",
+  "public_url": "https://okay-plant-builds-pubmed.trycloudflare.com?pin=1234",
+  "local_url": "http://172.16.0.2:8765?pin=1234",
+  "pin": "1234",
+  "resolution": "1920x1200",
+  "battery": "80%",
+  "power_plugged": true,
+  "cpu": "21.9%",
+  "status": "ready",
+  "timestamp": 1790344312,
+  "connect_url": "https://okay-plant-builds-pubmed.trycloudflare.com?pin=1234"
+}

@@ -13,7 +13,7 @@ cloudflared.exe
 # Zip packages
 *.zip
 
-# Local credentials / state
-connection_info.json
+# Local state
 .DS_Store
+Thumbs.db
 Thumbs.db
