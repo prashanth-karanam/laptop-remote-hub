@@ -404,6 +404,32 @@ async def upload_file(pin: str = Form(...), dest_dir: str = Form(...), file: Upl
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Browser JavaScript key name to PyAutoGUI key name translation map
+KEY_TRANSLATIONS = {
+    "arrowup": "up",
+    "arrowdown": "down",
+    "arrowleft": "left",
+    "arrowright": "right",
+    "escape": "esc",
+    "control": "ctrl",
+    "meta": "win",
+    "os": "win",
+    "command": "win",
+    "altgraph": "alt",
+    "backspace": "backspace",
+    "enter": "enter",
+    "tab": "tab",
+    "delete": "delete",
+    "home": "home",
+    "end": "end",
+    "pageup": "pageup",
+    "pagedown": "pagedown",
+    "capslock": "capslock",
+    "space": "space",
+    " ": "space"
+}
+
+
 # ================= WEBSOCKET REAL-TIME CONTROLLER =================
 
 @app.websocket("/ws")
@@ -433,45 +459,69 @@ async def websocket_controller(websocket: WebSocket):
                     await websocket.close()
                     break
 
-            # Handle mouse movements
+            # Handle relative mouse movements (Touchpad Mode)
             if msg_type == "mouse_move":
                 dx = data.get("dx", 0)
                 dy = data.get("dy", 0)
-                # Apply smooth non-linear acceleration
                 speed = data.get("speed", 1.2)
                 pyautogui.moveRel(dx * speed, dy * speed)
+
+            # Handle absolute mouse movements (Second Screen / Laptop Mode)
+            elif msg_type == "mouse_move_to":
+                x_pct = float(data.get("x_pct", 0))
+                y_pct = float(data.get("y_pct", 0))
+                target_x = max(0, min(screen_width - 1, int(x_pct * screen_width)))
+                target_y = max(0, min(screen_height - 1, int(y_pct * screen_height)))
+                pyautogui.moveTo(target_x, target_y)
 
             # Handle mouse clicks
             elif msg_type == "mouse_click":
                 btn = data.get("button", "left")
-                clicks = data.get("clicks", 1)
-                pyautogui.click(button=btn, clicks=clicks)
+                clicks = int(data.get("clicks", 1))
+                if "x_pct" in data and "y_pct" in data:
+                    target_x = max(0, min(screen_width - 1, int(float(data["x_pct"]) * screen_width)))
+                    target_y = max(0, min(screen_height - 1, int(float(data["y_pct"]) * screen_height)))
+                    pyautogui.click(x=target_x, y=target_y, button=btn, clicks=clicks)
+                else:
+                    pyautogui.click(button=btn, clicks=clicks)
 
             elif msg_type == "mouse_down":
                 btn = data.get("button", "left")
+                if "x_pct" in data and "y_pct" in data:
+                    target_x = max(0, min(screen_width - 1, int(float(data["x_pct"]) * screen_width)))
+                    target_y = max(0, min(screen_height - 1, int(float(data["y_pct"]) * screen_height)))
+                    pyautogui.moveTo(target_x, target_y)
                 pyautogui.mouseDown(button=btn)
 
             elif msg_type == "mouse_up":
                 btn = data.get("button", "left")
+                if "x_pct" in data and "y_pct" in data:
+                    target_x = max(0, min(screen_width - 1, int(float(data["x_pct"]) * screen_width)))
+                    target_y = max(0, min(screen_height - 1, int(float(data["y_pct"]) * screen_height)))
+                    pyautogui.moveTo(target_x, target_y)
                 pyautogui.mouseUp(button=btn)
 
             elif msg_type == "mouse_scroll":
                 dy = data.get("dy", 0)
-                pyautogui.scroll(int(-dy * 25))
+                # In browser wheel, dy > 0 is down, dy < 0 is up
+                # PyAutoGUI scroll(): positive = up, negative = down
+                clicks = -int(dy / 25) if abs(dy) >= 25 else (-1 if dy > 0 else 1)
+                pyautogui.scroll(clicks)
 
             # Tap on specific screen coordinate from phone screen viewer
             elif msg_type == "screen_click":
-                x_pct = data.get("x_pct", 0)
-                y_pct = data.get("y_pct", 0)
+                x_pct = float(data.get("x_pct", 0))
+                y_pct = float(data.get("y_pct", 0))
                 btn = data.get("button", "left")
-                clicks = data.get("clicks", 1)
-                abs_x = int(x_pct * screen_width)
-                abs_y = int(y_pct * screen_height)
+                clicks = int(data.get("clicks", 1))
+                abs_x = max(0, min(screen_width - 1, int(x_pct * screen_width)))
+                abs_y = max(0, min(screen_height - 1, int(y_pct * screen_height)))
                 pyautogui.click(x=abs_x, y=abs_y, button=btn, clicks=clicks)
 
             # Handle Keyboard & Live Typing
             elif msg_type == "key_press":
-                key = data.get("key", "").lower()
+                raw_key = data.get("key", "").lower()
+                key = KEY_TRANSLATIONS.get(raw_key, raw_key)
                 if key:
                     try:
                         pyautogui.press(key)
@@ -479,14 +529,22 @@ async def websocket_controller(websocket: WebSocket):
                         print(f"Key press error {key}: {e}")
 
             elif msg_type == "key_down":
-                key = data.get("key", "").lower()
+                raw_key = data.get("key", "").lower()
+                key = KEY_TRANSLATIONS.get(raw_key, raw_key)
                 if key:
-                    pyautogui.keyDown(key)
+                    try:
+                        pyautogui.keyDown(key)
+                    except Exception:
+                        pass
 
             elif msg_type == "key_up":
-                key = data.get("key", "").lower()
+                raw_key = data.get("key", "").lower()
+                key = KEY_TRANSLATIONS.get(raw_key, raw_key)
                 if key:
-                    pyautogui.keyUp(key)
+                    try:
+                        pyautogui.keyUp(key)
+                    except Exception:
+                        pass
 
             elif msg_type == "type_text":
                 text = data.get("text", "")

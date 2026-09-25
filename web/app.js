@@ -8,9 +8,46 @@ let screenStreamActive = false;
 let screenTimer = null;
 let currentPath = "C:\\Users\\Praashu";
 
-// Query param auto-fill for PIN
+// Query param auto-fill for PIN and target backend
 const urlParams = new URLSearchParams(window.location.search);
 const pinFromUrl = urlParams.get("pin");
+const targetFromUrl = urlParams.get("target");
+
+let backendBaseUrl = targetFromUrl || localStorage.getItem("remote_hub_target") || "";
+
+function setBackendTarget(url) {
+  if (url) {
+    backendBaseUrl = url.replace(/\/+$/, '');
+    localStorage.setItem("remote_hub_target", backendBaseUrl);
+    console.log("[RemoteHub] Backend target set to:", backendBaseUrl);
+  }
+}
+
+if (targetFromUrl) {
+  setBackendTarget(targetFromUrl);
+}
+
+function getApiUrl(endpoint) {
+  if (backendBaseUrl) {
+    const base = backendBaseUrl.replace(/\/+$/, '');
+    const path = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+    return `${base}${path}`;
+  }
+  return endpoint;
+}
+
+function getWsUrl(endpoint) {
+  const path = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
+  if (backendBaseUrl) {
+    try {
+      const u = new URL(backendBaseUrl);
+      const wsProto = u.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${wsProto}//${u.host}${path}`;
+    } catch(e) {}
+  }
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}${path}`;
+}
 
 // DOM Elements
 const authModal = document.getElementById("auth-modal");
@@ -24,12 +61,19 @@ window.addEventListener("DOMContentLoaded", () => {
   setupNavigation();
   setupTouchpad();
   setupScreenStream();
+  setupDesktopInputPassThrough();
   setupLiveTyping();
   setupTerminal();
   setupFiles();
   setupShortcuts();
   setupClipboard();
   setupAppSearch();
+
+  // Mode Auto-detection: Second Screen / Laptop Mode for laptops/desktops, Mobile Touchpad for phones
+  const savedMode = localStorage.getItem("remote_hub_ui_mode");
+  const isLargeScreen = window.innerWidth >= 900 && (!('ontouchstart' in window) || navigator.maxTouchPoints <= 1);
+  const initialMode = savedMode || (isLargeScreen ? "desktop" : "mobile");
+  setUIMode(initialMode, true);
 
   if (pinFromUrl) {
     pinInput.value = pinFromUrl;
@@ -57,13 +101,16 @@ function attemptConnect(pin) {
   authError.textContent = "Connecting to laptop...";
 
   // Quick HTTP Auth check for instant UI unlock
-  fetch(`/api/status?pin=${pin}`)
+  fetch(getApiUrl(`/api/status?pin=${pin}`))
     .then(res => {
       if (res.ok) {
         isConnected = true;
         authModal.classList.add("hidden");
         appContainer.classList.remove("hidden");
         authError.textContent = "";
+        if (currentUIMode === "desktop") {
+          startScreenStream();
+        }
         return res.json();
       } else {
         authError.textContent = "Invalid PIN.";
@@ -76,8 +123,7 @@ function attemptConnect(pin) {
       console.warn("HTTP Auth fallback warning:", err);
     });
 
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const wsUrl = `${protocol}//${window.location.host}/ws`;
+  const wsUrl = getWsUrl("/ws");
 
   try {
     if (ws) {
@@ -171,6 +217,10 @@ function handleWsMessage(msg) {
     appContainer.classList.remove("hidden");
     authError.textContent = "";
 
+    if (currentUIMode === "desktop") {
+      startScreenStream();
+    }
+
     // Start background telemetry polling
     pollTelemetry();
   } else if (msg.type === "auth_fail") {
@@ -205,7 +255,7 @@ function sendWs(data) {
 async function pollTelemetry() {
   if (!isConnected) return;
   try {
-    const res = await fetch(`/api/status?pin=${currentPin}`);
+    const res = await fetch(getApiUrl(`/api/status?pin=${currentPin}`));
     if (res.ok) {
       const data = await res.json();
       updateTelemetryUI(data);
@@ -595,8 +645,9 @@ function setupScreenStream() {
     });
   });
 
-  // Mouse wheel zoom support
+  // Mouse wheel zoom support (only active in Mobile Mode)
   screenContainer.addEventListener("wheel", (e) => {
+    if (currentUIMode === "desktop") return;
     e.preventDefault();
     const delta = e.deltaY < 0 ? 0.25 : -0.25;
     setZoom(screenZoom + delta, false);
@@ -763,11 +814,10 @@ const QUALITY_PRESETS = {
 
 function updateQualityPillsUI(mode) {
   document.querySelectorAll(".quality-btn").forEach(btn => {
-    if (btn.getAttribute("data-mode") === mode) {
-      btn.classList.add("active");
-    } else {
-      btn.classList.remove("active");
-    }
+    btn.classList.toggle("active", btn.getAttribute("data-mode") === mode);
+  });
+  document.querySelectorAll(".floating-btn[data-fmode]").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-fmode") === mode);
   });
 }
 
@@ -788,6 +838,10 @@ function setScreenQuality(mode) {
   const badge = document.getElementById("stream-stats-badge");
   if (badge) {
     badge.textContent = `${QUALITY_PRESETS[mode].name}`;
+  }
+  const floatBadge = document.getElementById("float-stream-stats");
+  if (floatBadge) {
+    floatBadge.textContent = `${QUALITY_PRESETS[mode].name}`;
   }
 }
 
@@ -811,8 +865,7 @@ function stopScreenStream() {
 function startWsScreenStream() {
   if (!screenStreamActive || !currentPin) return;
 
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const wsUrl = `${protocol}//${window.location.host}/ws/screen`;
+  const wsUrl = getWsUrl("/ws/screen");
 
   try {
     if (screenWs) {
@@ -890,6 +943,10 @@ function startWsScreenStream() {
           if (badge) {
             badge.textContent = `${currentFps} FPS • ${QUALITY_PRESETS[currentScreenMode].name}`;
           }
+          const floatBadge = document.getElementById("float-stream-stats");
+          if (floatBadge) {
+            floatBadge.textContent = `${currentFps} FPS`;
+          }
         }
       } catch (err) {
         console.warn("Screen draw error:", err);
@@ -936,7 +993,7 @@ async function fetchNextScreenFrame() {
   const timeoutId = setTimeout(() => controller.abort(), 2500);
 
   try {
-    const res = await fetch(`/api/screenshot?pin=${currentPin}&q=${cfg.quality}&scale=${cfg.scale}&t=${Date.now()}`, {
+    const res = await fetch(getApiUrl(`/api/screenshot?pin=${currentPin}&q=${cfg.quality}&scale=${cfg.scale}&t=${Date.now()}`), {
       signal: controller.signal
     });
     clearTimeout(timeoutId);
@@ -978,6 +1035,10 @@ async function fetchNextScreenFrame() {
         if (badge) {
           badge.textContent = `${currentFps} FPS • HTTP`;
         }
+        const floatBadge = document.getElementById("float-stream-stats");
+        if (floatBadge) {
+          floatBadge.textContent = `${currentFps} FPS • HTTP`;
+        }
       }
     }
   } catch (err) {
@@ -996,7 +1057,7 @@ async function fetchNextScreenFrame() {
 async function sendAction(action) {
   if (navigator.vibrate) navigator.vibrate(30);
   try {
-    await fetch("/api/action", {
+    await fetch(getApiUrl("/api/action"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin: currentPin, action: action })
@@ -1009,7 +1070,7 @@ async function sendAction(action) {
 async function launchApp(appName) {
   if (navigator.vibrate) navigator.vibrate(30);
   try {
-    await fetch("/api/action", {
+    await fetch(getApiUrl("/api/action"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin: currentPin, action: "launch_app", app: appName })
@@ -1120,7 +1181,7 @@ function setupFiles() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("/api/files/upload", { method: "POST", body: formData });
+      const res = await fetch(getApiUrl("/api/files/upload"), { method: "POST", body: formData });
       if (res.ok) {
         alert("Upload successful: " + file.name);
         loadDirectory(currentPath);
@@ -1139,7 +1200,7 @@ async function loadDirectory(path) {
   container.innerHTML = `<div class="spinner"></div>`;
 
   try {
-    const res = await fetch(`/api/files?pin=${currentPin}&path=${encodeURIComponent(path)}`);
+    const res = await fetch(getApiUrl(`/api/files?pin=${currentPin}&path=${encodeURIComponent(path)}`));
     if (!res.ok) throw new Error("Failed to load path");
 
     const data = await res.json();
@@ -1166,7 +1227,7 @@ async function loadDirectory(path) {
           loadDirectory(item.path);
         } else {
           // Download file
-          window.location.href = `/api/files/download?pin=${currentPin}&path=${encodeURIComponent(item.path)}`;
+          window.location.href = getApiUrl(`/api/files/download?pin=${currentPin}&path=${encodeURIComponent(item.path)}`);
         }
       });
 
@@ -1188,7 +1249,7 @@ async function setupAppSearch() {
 
   // Load apps in background
   try {
-    const res = await fetch(`/api/apps?pin=${currentPin}`);
+    const res = await fetch(getApiUrl(`/api/apps?pin=${currentPin}`));
     if (res.ok) {
       const data = await res.json();
       allInstalledApps = data.apps || [];
@@ -1279,7 +1340,7 @@ function renderAppResults(apps) {
 async function launchSpecificApp(app) {
   if (navigator.vibrate) navigator.vibrate(30);
   try {
-    await fetch("/api/apps/launch", {
+    await fetch(getApiUrl("/api/apps/launch"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin: currentPin, appid: app.appid, name: app.name })
@@ -1289,3 +1350,216 @@ async function launchSpecificApp(app) {
     console.error("App launch error:", e);
   }
 }
+
+// ==========================================================================
+// DUAL-MODE CONTROLLER: LAPTOP / SECOND SCREEN vs MOBILE TOUCHPAD
+// ==========================================================================
+
+let currentUIMode = "mobile"; // "mobile" or "desktop"
+let mouseMovePending = false;
+let nextMousePos = null;
+
+function setUIMode(mode, autoStarted = false) {
+  currentUIMode = mode;
+  localStorage.setItem("remote_hub_ui_mode", mode);
+
+  const floatingBar = document.getElementById("desktop-floating-bar");
+  const modeBtnLabel = document.getElementById("mode-btn-label");
+  const modeBtn = document.getElementById("btn-toggle-ui-mode");
+
+  if (mode === "desktop") {
+    appContainer.classList.add("desktop-mode");
+    if (floatingBar) floatingBar.classList.remove("hidden");
+    if (modeBtnLabel) modeBtnLabel.textContent = "Mobile Mode";
+    if (modeBtn) modeBtn.innerHTML = `<i class="fa-solid fa-mobile-screen"></i> <span>Mobile Mode</span>`;
+
+    // Make sure screen view is active
+    document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+    const screenPanel = document.getElementById("view-screen");
+    if (screenPanel) screenPanel.classList.add("active");
+
+    // Reset mobile zoom when entering desktop mode for 1:1 pixel fidelity
+    setZoom(1.0, false);
+
+    // Auto-start screen stream
+    if (isConnected) {
+      startScreenStream();
+    }
+  } else {
+    appContainer.classList.remove("desktop-mode");
+    if (floatingBar) floatingBar.classList.add("hidden");
+    if (modeBtnLabel) modeBtnLabel.textContent = "Laptop Mode";
+    if (modeBtn) modeBtn.innerHTML = `<i class="fa-solid fa-laptop"></i> <span>Laptop Mode</span>`;
+
+    // Reset to touchpad view if exiting desktop mode
+    const touchpadNavBtn = document.querySelector('.nav-item[data-target="view-touchpad"]');
+    if (touchpadNavBtn && !autoStarted) {
+      touchpadNavBtn.click();
+    }
+  }
+}
+
+function toggleUIMode() {
+  setUIMode(currentUIMode === "desktop" ? "mobile" : "desktop");
+}
+
+function setupDesktopInputPassThrough() {
+  const canvas = document.getElementById("screen-canvas");
+  if (!canvas) return;
+
+  // 1. Physical Mouse Movement (throttled to 60fps via requestAnimationFrame)
+  function handleCanvasPointerMove(e) {
+    if (currentUIMode !== "desktop" || !isConnected) return;
+    const rect = canvas.getBoundingClientRect();
+    const xPct = (e.clientX - rect.left) / rect.width;
+    const yPct = (e.clientY - rect.top) / rect.height;
+
+    if (xPct >= 0 && xPct <= 1 && yPct >= 0 && yPct <= 1) {
+      nextMousePos = { xPct, yPct };
+      if (!mouseMovePending) {
+        mouseMovePending = true;
+        requestAnimationFrame(() => {
+          if (nextMousePos) {
+            sendWs({ type: "mouse_move_to", x_pct: nextMousePos.xPct, y_pct: nextMousePos.yPct });
+          }
+          mouseMovePending = false;
+        });
+      }
+    }
+  }
+
+  // 2. Physical Mouse Down
+  function handleCanvasPointerDown(e) {
+    if (currentUIMode !== "desktop" || !isConnected) return;
+    if (e.pointerType === "touch") return; // Touch is handled separately
+
+    const rect = canvas.getBoundingClientRect();
+    const xPct = (e.clientX - rect.left) / rect.width;
+    const yPct = (e.clientY - rect.top) / rect.height;
+
+    if (xPct >= 0 && xPct <= 1 && yPct >= 0 && yPct <= 1) {
+      const btn = e.button === 2 ? "right" : (e.button === 1 ? "middle" : "left");
+      sendWs({ type: "mouse_down", button: btn, x_pct: xPct, y_pct: yPct });
+    }
+  }
+
+  // 3. Physical Mouse Up
+  function handleCanvasPointerUp(e) {
+    if (currentUIMode !== "desktop" || !isConnected) return;
+    if (e.pointerType === "touch") return;
+
+    const rect = canvas.getBoundingClientRect();
+    const xPct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const yPct = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+    const btn = e.button === 2 ? "right" : (e.button === 1 ? "middle" : "left");
+    sendWs({ type: "mouse_up", button: btn, x_pct: xPct, y_pct: yPct });
+  }
+
+  // 4. Suppress browser right-click menu on canvas so Windows receives it
+  canvas.addEventListener("contextmenu", (e) => {
+    if (currentUIMode === "desktop") {
+      e.preventDefault();
+    }
+  });
+
+  // 5. Wheel scrolling pass-through in Desktop mode
+  canvas.addEventListener("wheel", (e) => {
+    if (currentUIMode === "desktop" && isConnected) {
+      e.preventDefault();
+      sendWs({ type: "mouse_scroll", dy: e.deltaY, dx: e.deltaX });
+    }
+  }, { passive: false });
+
+  // 6. Double-click pass-through
+  canvas.addEventListener("dblclick", (e) => {
+    if (currentUIMode !== "desktop" || !isConnected) return;
+    const rect = canvas.getBoundingClientRect();
+    const xPct = (e.clientX - rect.left) / rect.width;
+    const yPct = (e.clientY - rect.top) / rect.height;
+    if (xPct >= 0 && xPct <= 1 && yPct >= 0 && yPct <= 1) {
+      sendWs({ type: "mouse_click", button: "left", clicks: 2, x_pct: xPct, y_pct: yPct });
+    }
+  });
+
+  canvas.addEventListener("pointermove", handleCanvasPointerMove);
+  canvas.addEventListener("pointerdown", handleCanvasPointerDown);
+  window.addEventListener("pointerup", handleCanvasPointerUp);
+
+  // 7. Global Physical Keyboard Listener in Desktop Mode
+  window.addEventListener("keydown", (e) => {
+    if (currentUIMode !== "desktop" || !isConnected) return;
+
+    // Do not capture if user is typing into an input field or modal
+    const tag = document.activeElement ? document.activeElement.tagName : "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    // Prevent browser default actions for keys like Tab, Backspace, Arrows, F5, F11, etc.
+    const browserIntercept = [
+      "Tab", "Backspace", "Space", " ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+      "Escape", "F5", "F11", "Alt", "Meta", "Control"
+    ];
+    if (browserIntercept.includes(e.key) || (e.ctrlKey && ["c", "v", "z", "a", "s", "x", "w", "t", "r"].includes(e.key.toLowerCase()))) {
+      e.preventDefault();
+    }
+
+    sendWs({ type: "key_down", key: e.key.toLowerCase() });
+  });
+
+  window.addEventListener("keyup", (e) => {
+    if (currentUIMode !== "desktop" || !isConnected) return;
+    const tag = document.activeElement ? document.activeElement.tagName : "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+    sendWs({ type: "key_up", key: e.key.toLowerCase() });
+  });
+
+  // Setup UI mode toggle buttons
+  const btnToggleMode = document.getElementById("btn-toggle-ui-mode");
+  if (btnToggleMode) btnToggleMode.addEventListener("click", toggleUIMode);
+
+  const btnFloatMode = document.getElementById("btn-float-mode");
+  if (btnFloatMode) btnFloatMode.addEventListener("click", toggleUIMode);
+
+  // Floating Fullscreen toggle button
+  const btnFloatFullscreen = document.getElementById("btn-float-fullscreen");
+  if (btnFloatFullscreen) {
+    btnFloatFullscreen.addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => console.log(err));
+      } else {
+        document.exitFullscreen();
+      }
+    });
+  }
+
+  // Floating Shortcuts Popover Menu
+  const btnFloatShortcuts = document.getElementById("btn-float-shortcuts");
+  const popover = document.getElementById("floating-shortcuts-popover");
+  if (btnFloatShortcuts && popover) {
+    btnFloatShortcuts.addEventListener("click", (e) => {
+      e.stopPropagation();
+      popover.classList.toggle("hidden");
+    });
+    document.addEventListener("click", () => {
+      popover.classList.add("hidden");
+    });
+  }
+
+  // Floating Quality Selector Buttons
+  document.querySelectorAll(".floating-btn[data-fmode]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const mode = btn.getAttribute("data-fmode");
+      setScreenQuality(mode);
+    });
+  });
+
+  // Floating Exit / Switch PC Button
+  const btnFloatSwitchPc = document.getElementById("btn-float-switch-pc");
+  const hubOverlay = document.getElementById("device-hub-overlay");
+  if (btnFloatSwitchPc && hubOverlay) {
+    btnFloatSwitchPc.addEventListener("click", () => {
+      hubOverlay.classList.remove("hidden");
+    });
+  }
+}
+

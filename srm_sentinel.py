@@ -75,13 +75,13 @@ status_data = {
 
 
 def prevent_windows_sleep():
-    """Instructs Windows Kernel to never sleep CPU or Wi-Fi while running."""
+    """Instructs Windows Kernel to never sleep CPU, Display, or Wi-Fi while running."""
     try:
         if sys.platform == "win32":
             ctypes.windll.kernel32.SetThreadExecutionState(
-                ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED
+                ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_AWAYMODE_REQUIRED
             )
-            logger.info("Windows Power Lock active: Sleep & Wi-Fi power-save prevented.")
+            logger.info("Windows Power Lock active: Sleep, Display timeout, & Wi-Fi power-save prevented.")
     except Exception as e:
         logger.warning(f"Could not set thread execution state: {e}")
 

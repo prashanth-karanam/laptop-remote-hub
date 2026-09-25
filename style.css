@@ -1143,3 +1143,269 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   LAPTOP / DESKTOP (SECOND SCREEN) MODE STYLING
+   ========================================================================== */
+
+/* Mode Toggle Button in Topbar & Floating Bar */
+.btn-mode-toggle {
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.18), rgba(58, 123, 213, 0.25));
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  color: #00d2ff;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-mode-toggle:hover {
+  background: rgba(0, 210, 255, 0.3);
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+}
+
+.btn-mode-toggle:active {
+  transform: scale(0.96);
+}
+
+/* Desktop / Second Screen Mode layout override */
+.app-container.desktop-mode {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.app-container.desktop-mode .top-bar,
+.app-container.desktop-mode .bottom-nav,
+.app-container.desktop-mode .global-typing-bar {
+  display: none !important;
+}
+
+.app-container.desktop-mode .main-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.app-container.desktop-mode .view-panel {
+  display: none !important;
+}
+
+.app-container.desktop-mode #view-screen {
+  display: flex !important;
+  flex: 1 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.app-container.desktop-mode #view-screen .screen-controls-top,
+.app-container.desktop-mode #view-screen .screen-quality-bar,
+.app-container.desktop-mode #view-screen .screen-help {
+  display: none !important;
+}
+
+.app-container.desktop-mode .screen-canvas-container {
+  width: 100vw !important;
+  height: 100vh !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: #000 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.app-container.desktop-mode .screen-transform-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.app-container.desktop-mode #screen-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+  cursor: default !important;
+}
+
+/* Floating Dynamic Top Control Bar for Second Screen Mode */
+.desktop-floating-bar {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 15, 28, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: 40px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 5000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 210, 255, 0.2);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  user-select: none;
+}
+
+.desktop-floating-bar.hidden {
+  display: none !important;
+}
+
+.floating-brand-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #00e676;
+  box-shadow: 0 0 10px #00e676;
+  animation: radarPulse 2s infinite ease-in-out;
+}
+
+.floating-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.floating-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.floating-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.floating-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  padding: 5px 10px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.floating-btn:hover {
+  background: rgba(0, 210, 255, 0.2);
+  border-color: rgba(0, 210, 255, 0.4);
+  color: #00d2ff;
+}
+
+.floating-btn:active {
+  transform: scale(0.95);
+}
+
+.floating-btn.active {
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.3), rgba(58, 123, 213, 0.4));
+  border-color: #00d2ff;
+  color: #00d2ff;
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+}
+
+.floating-btn-danger {
+  color: #ff5252;
+}
+
+.floating-btn-danger:hover {
+  background: rgba(255, 82, 82, 0.2);
+  border-color: #ff5252;
+  color: #fff;
+}
+
+/* Keyboard capture status banner in Desktop mode */
+.key-listener-indicator {
+  font-size: 0.72rem;
+  color: #8b949e;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.key-listener-indicator.active {
+  color: #00e676;
+}
+
+/* Floating Shortcuts Popover Menu */
+.floating-shortcuts-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 22, 38, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: 16px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 320px;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.8);
+  z-index: 5100;
+}
+
+.floating-shortcuts-menu.hidden {
+  display: none !important;
+}
+
+.shortcut-chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f0f6fc;
+  border-radius: 8px;
+  padding: 7px 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.shortcut-chip:hover {
+  background: rgba(0, 210, 255, 0.2);
+  border-color: rgba(0, 210, 255, 0.4);
+  color: #00d2ff;
+}
+

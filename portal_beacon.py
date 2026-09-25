@@ -120,6 +120,12 @@ def broadcast_beacon(public_url: str, local_url: str, pin: str = "1234"):
         with urllib.request.urlopen(req, timeout=8) as resp:
             if resp.status == 200:
                 logger.info(f"Broadcasted live beacon to 24/7 Portal Channel: '{channel}'")
+    except urllib.error.HTTPError as e:
+        if e.code == 429:
+            logger.info("Beacon broadcast throttled (429) - backing off for 60s")
+            time.sleep(30)
+        else:
+            logger.warning(f"Beacon broadcast warning: {e}")
     except Exception as e:
         logger.warning(f"Beacon broadcast warning: {e}")
 
@@ -137,6 +143,7 @@ _beacon_active = False
 
 def _beacon_loop(public_url_func, local_url_func, pin_func):
     global _beacon_active
+    last_pub = ""
     while _beacon_active:
         try:
             pub_url = public_url_func() if callable(public_url_func) else public_url_func
@@ -144,9 +151,10 @@ def _beacon_loop(public_url_func, local_url_func, pin_func):
             p = pin_func() if callable(pin_func) else pin_func
             if pub_url or loc_url:
                 broadcast_beacon(pub_url, loc_url, p)
+                last_pub = pub_url
         except Exception as e:
             logger.debug(f"Beacon loop error: {e}")
-        time.sleep(25)  # 25-second heartbeat
+        time.sleep(55)  # 55-second heartbeat prevents rate limits
 
 
 def start_portal_beacon_thread(get_public_url, get_local_url, get_pin):

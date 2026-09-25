@@ -437,10 +437,76 @@
 
   <!-- ================= MAIN CONTROLLER APPLICATION ================= -->
   <div id="app-container" class="app-container hidden">
+
+    <!-- Floating Dynamic Top Control Bar for Laptop / Second Screen Mode -->
+    <div id="desktop-floating-bar" class="desktop-floating-bar hidden">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="floating-brand-dot"></span>
+        <span class="floating-title" id="float-device-name">Second Screen</span>
+      </div>
+
+      <div class="floating-divider"></div>
+
+      <!-- Mode Toggle (Switch to Mobile) -->
+      <button class="floating-btn" id="btn-float-mode" title="Switch to Mobile Touchpad Mode">
+        <i class="fa-solid fa-mobile-screen"></i> <span>Mobile Mode</span>
+      </button>
+
+      <!-- Quality selector pills -->
+      <div class="floating-pills">
+        <button class="floating-btn active" data-fmode="ultra" title="Ultra HD 1080p Native">💎 Ultra</button>
+        <button class="floating-btn" data-fmode="turbo" title="60 FPS Turbo">⚡ 60 FPS</button>
+        <button class="floating-btn" data-fmode="balanced" title="Balanced Performance">⚖️ Balanced</button>
+      </div>
+
+      <div class="floating-divider"></div>
+
+      <!-- Windows & System Hotkeys Dropdown Button -->
+      <div style="position:relative;">
+        <button class="floating-btn" id="btn-float-shortcuts" title="Quick Windows Hotkeys">
+          <i class="fa-brands fa-windows"></i> <span>Keys ▾</span>
+        </button>
+        <!-- Floating Shortcuts Menu -->
+        <div id="floating-shortcuts-popover" class="floating-shortcuts-menu hidden">
+          <button class="shortcut-chip" onclick="sendKeyPress('win')"><i class="fa-brands fa-windows"></i> Win</button>
+          <button class="shortcut-chip" onclick="sendHotkey(['win', 'd'])">Win + D</button>
+          <button class="shortcut-chip" onclick="sendHotkey(['alt', 'tab'])">Alt + Tab</button>
+          <button class="shortcut-chip" onclick="sendHotkey(['ctrl', 'shift', 'esc'])">TaskMgr</button>
+          <button class="shortcut-chip" onclick="sendHotkey(['ctrl', 'c'])">Ctrl + C</button>
+          <button class="shortcut-chip" onclick="sendHotkey(['ctrl', 'v'])">Ctrl + V</button>
+          <button class="shortcut-chip" onclick="sendHotkey(['win', 'e'])">Explorer</button>
+          <button class="shortcut-chip" onclick="sendKeyPress('enter')">Enter</button>
+          <button class="shortcut-chip" onclick="sendKeyPress('esc')">Esc</button>
+        </div>
+      </div>
+
+      <!-- Fullscreen Toggle Button -->
+      <button class="floating-btn" id="btn-float-fullscreen" title="Toggle Fullscreen (F11)">
+        <i class="fa-solid fa-expand"></i>
+      </button>
+
+      <!-- Keyboard Listener Status -->
+      <span class="key-listener-indicator active" title="Physical keyboard pass-through active">
+        <i class="fa-solid fa-keyboard"></i> <span>Pass-through</span>
+      </span>
+
+      <!-- Latency & FPS Badge -->
+      <span class="stream-stats-badge" id="float-stream-stats">60 FPS</span>
+
+      <!-- Switch PC / Hub button -->
+      <button class="floating-btn floating-btn-danger" id="btn-float-switch-pc" title="Exit to Hub / Switch PC">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
     <!-- Top Header & Live Telemetry -->
     <header class="top-bar">
       <button class="btn-top-device" id="btn-show-devices" title="Switch PC">
         <i class="fa-solid fa-laptop"></i> <span id="active-device-name">My PC</span>
+      </button>
+      <!-- Dual-Mode Switcher in Top Bar -->
+      <button class="btn-mode-toggle" id="btn-toggle-ui-mode" title="Switch between Laptop & Mobile Mode">
+        <i class="fa-solid fa-laptop"></i> <span id="mode-btn-label">Laptop Mode</span>
       </button>
       <button class="btn-top-win" id="btn-top-win" onclick="sendKeyPress('win')" title="Toggle Windows Start Menu">
         <i class="fa-brands fa-windows"></i> <span>Start</span>
