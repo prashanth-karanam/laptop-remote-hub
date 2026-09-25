@@ -1,0 +1,5 @@
+{
+  "cloudflare_token": "",
+  "custom_domain": "",
+  "notes": "Leave cloudflare_token empty to use automatic Cloudflare Quick Tunnel, or provide your Named Tunnel token for a 100% permanent custom domain."
+}

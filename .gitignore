@@ -1,0 +1,19 @@
+# Logs
+*.log
+hub_*.log
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Cloudflared binary (auto-downloaded on 1-click run)
+cloudflared.exe
+
+# Zip packages
+*.zip
+
+# Local credentials / state
+connection_info.json
+.DS_Store
+Thumbs.db

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d1117">
+  <title>Laptop Remote Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <!-- PIN Login Overlay -->
+  <div id="auth-modal" class="modal-overlay">
+    <div class="glass-card auth-card">
+      <div class="auth-icon"><i class="fa-solid fa-laptop-code"></i></div>
+      <h2>Laptop Remote Hub</h2>
+      <p>Enter Security PIN to connect</p>
+      <div class="pin-inputs">
+        <input type="password" id="pin-input" maxlength="8" placeholder="••••" inputmode="numeric" autofocus>
+      </div>
+      <button id="btn-login" class="btn btn-primary"><i class="fa-solid fa-lock-open"></i> Connect</button>
+      <div id="auth-error" class="error-msg"></div>
+    </div>
+  </div>
+
+  <!-- Main App Layout -->
+  <div id="app-container" class="app-container hidden">
+    <!-- Top Header & Live Telemetry -->
+    <header class="top-bar">
+      <button class="btn-top-win" id="btn-top-win" onclick="sendKeyPress('win')" title="Toggle Windows Start Menu">
+        <i class="fa-brands fa-windows"></i> <span>Start</span>
+      </button>
+      <div class="status-pill" id="srm-status">
+        <span class="dot green"></span>
+        <span class="label" id="wifi-label">SRMIST: Active</span>
+      </div>
+      <div class="telemetry">
+        <span id="bat-indicator"><i class="fa-solid fa-battery-half"></i> <span id="bat-val">--%</span></span>
+        <span id="cpu-indicator"><i class="fa-solid fa-microchip"></i> <span id="cpu-val">--%</span></span>
+      </div>
+    </header>
+
+    <!-- Global Floating Live Typing Bar -->
+    <div id="global-typing-bar" class="global-typing-bar">
+      <div class="type-input-wrap">
+        <input type="text" id="live-typing-box" placeholder="Tap to open phone keyboard & type live..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="quick-type-actions">
+        <button class="mini-btn mini-btn-win" id="btn-quick-win" onclick="sendKeyPress('win')"><i class="fa-brands fa-windows"></i> Win</button>
+        <button class="mini-btn" id="btn-quick-esc">Esc</button>
+        <button class="mini-btn" id="btn-quick-tab">Tab</button>
+        <button class="mini-btn" id="btn-quick-bs">⌫</button>
+        <button class="mini-btn mini-btn-accent" id="btn-quick-enter">↵ Enter</button>
+      </div>
+    </div>
+
+    <!-- Main Views Container -->
+    <main class="main-content">
+
+      <!-- 1. TOUCHPAD VIEW -->
+      <section id="view-touchpad" class="view-panel active">
+        <!-- Sensitivity & Gyro Controls Bar -->
+        <div class="mouse-top-toolbar">
+          <div class="speed-toggle-group">
+            <span class="speed-label"><i class="fa-solid fa-gauge-high"></i> Speed:</span>
+            <button class="speed-btn" data-speed="0.8">Slow</button>
+            <button class="speed-btn active" data-speed="1.4">Normal</button>
+            <button class="speed-btn" data-speed="2.2">Fast</button>
+          </div>
+          <button class="btn-gyro" id="btn-toggle-gyro"><i class="fa-solid fa-compass"></i> Air Mouse</button>
+        </div>
+
+        <div class="touchpad-wrapper">
+          <!-- Main Touchpad Area -->
+          <div id="touchpad-surface" class="touchpad-surface">
+            <div class="touch-hint">
+              <i class="fa-solid fa-hand-pointer"></i>
+              <span>Touch & Slide to Move Mouse<br>Tap = Left Click | 2-Finger Tap = Right Click<br>Right strip = Scroll Wheel</span>
+            </div>
+          </div>
+          
+          <!-- Dedicated Vertical Scroll Strip -->
+          <div id="scroll-strip" class="scroll-strip">
+            <i class="fa-solid fa-chevron-up"></i>
+            <span class="scroll-label">SCROLL</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+        </div>
+
+        <!-- 5-Button Full Mouse Action Bar -->
+        <div class="mouse-actions-bar">
+          <button class="mouse-btn" id="btn-lclick"><i class="fa-solid fa-mouse-pointer"></i> Left</button>
+          <button class="mouse-btn" id="btn-dclick"><i class="fa-solid fa-bolt"></i> 2x Click</button>
+          <button class="mouse-btn" id="btn-mclick"><i class="fa-solid fa-arrows-up-down"></i> Middle</button>
+          <button class="mouse-btn" id="btn-draglock"><i class="fa-solid fa-hand-fist"></i> Drag</button>
+          <button class="mouse-btn" id="btn-rclick"><i class="fa-regular fa-hand-point-right"></i> Right</button>
+        </div>
+      </section>
+
+      <!-- 2. LIVE SCREEN VIEW -->
+      <section id="view-screen" class="view-panel">
+        <div class="screen-controls-top">
+          <button id="btn-screen-win" class="btn-icon btn-win-accent" onclick="sendKeyPress('win')" title="Toggle Windows Start Menu"><i class="fa-brands fa-windows"></i></button>
+          
+          <!-- Interactive Zoom Controls Bar -->
+          <div class="screen-zoom-bar">
+            <button id="btn-zoom-out" class="btn-icon btn-zoom" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <button id="btn-zoom-reset" class="btn-zoom-level" title="Reset Zoom">1.0x</button>
+            <button id="btn-zoom-in" class="btn-icon btn-zoom" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <button id="btn-zoom-fit" class="btn-icon btn-zoom" title="Fit to Screen / 100%"><i class="fa-solid fa-arrows-to-eye"></i></button>
+          </div>
+
+          <button id="btn-screen-refresh" class="btn-icon" title="Refresh Screen"><i class="fa-solid fa-rotate"></i></button>
+          <button id="btn-screen-fullscreen" class="btn-icon" title="Toggle Fullscreen"><i class="fa-solid fa-expand"></i></button>
+        </div>
+
+        <!-- High-Definition Quality & FPS Selector Bar -->
+        <div class="screen-quality-bar">
+          <span class="quality-label"><i class="fa-solid fa-sparkles"></i> Mode:</span>
+          <div class="quality-pills">
+            <button class="quality-btn active" data-mode="ultra" title="1080p Native, Crystal Clear (Scale 1.0, Q90)">💎 Ultra HD</button>
+            <button class="quality-btn" data-mode="turbo" title="Smooth 60 FPS (Scale 0.75, Q75)">⚡ 60 FPS</button>
+            <button class="quality-btn" data-mode="balanced" title="Balanced Performance (Scale 0.65, Q55)">⚖️ Balanced</button>
+            <button class="quality-btn" data-mode="eco" title="Low Data Mode (Scale 0.50, Q40)">🔋 Eco</button>
+          </div>
+          <span class="stream-stats-badge" id="stream-stats-badge">30 FPS • WS</span>
+        </div>
+        <div class="screen-canvas-container" id="screen-container">
+          <div class="screen-transform-wrapper" id="screen-transform-wrapper">
+            <canvas id="screen-canvas"></canvas>
+          </div>
+          <div id="screen-spinner" class="spinner"></div>
+          <div id="zoom-hud" class="zoom-hud">1.0x</div>
+        </div>
+        <div class="screen-help">
+          <span>Tap = Click | Pinch or +/- to Zoom | 2-Finger Drag to Pan | Double-tap to Quick-Zoom</span>
+        </div>
+      </section>
+
+      <!-- 3. KEYBOARD & SHORTCUTS VIEW -->
+      <section id="view-keyboard" class="view-panel">
+        <!-- Live Typing Console -->
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-keyboard"></i> Live Mobile Keyboard Typing</h3>
+          <div class="type-box">
+            <input type="text" id="direct-type-input" placeholder="Type words or paste text here to send..." autocomplete="off">
+            <button id="btn-send-text" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Send</button>
+          </div>
+        </div>
+
+        <!-- Clipboard Sync Hub -->
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-clipboard"></i> Remote Clipboard Sync</h3>
+          <div class="clipboard-box">
+            <input type="text" id="clipboard-input" placeholder="Text to paste into laptop clipboard...">
+            <div class="clip-actions">
+              <button class="btn btn-ctrl" id="btn-get-clipboard"><i class="fa-solid fa-download"></i> Get PC Text</button>
+              <button class="btn btn-ctrl btn-accent" id="btn-set-clipboard"><i class="fa-solid fa-upload"></i> Set PC Text</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow Keys & Navigation Pad -->
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-arrows-up-down-left-right"></i> Navigation Keys</h3>
+          <div class="dpad-container">
+            <div></div>
+            <button class="key-btn dpad-btn" onclick="sendKeyPress('up')">▲ Up</button>
+            <div></div>
+            <button class="key-btn dpad-btn" onclick="sendKeyPress('left')">◄ Left</button>
+            <button class="key-btn dpad-btn" onclick="sendKeyPress('down')">▼ Down</button>
+            <button class="key-btn dpad-btn" onclick="sendKeyPress('right')">► Right</button>
+          </div>
+        </div>
+
+        <!-- Windows Shortcuts Grid -->
+        <div class="glass-section">
+          <h3><i class="fa-brands fa-windows"></i> Windows & System Hotkeys</h3>
+          <div class="keys-grid">
+            <button class="key-btn key-btn-win" onclick="sendKeyPress('win')"><i class="fa-brands fa-windows"></i> Win (Start)</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'd'])">Win + D (Desktop)</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'tab'])">Win + Tab (Tasks)</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'x'])">Win + X (Menu)</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'v'])">Win + V (Clipboard)</button>
+            <button class="key-btn" onclick="sendHotkey(['alt', 'tab'])">Alt + Tab</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'c'])">Ctrl + C</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'v'])">Ctrl + V</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'z'])">Ctrl + Z</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'a'])">Ctrl + A</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 's'])">Ctrl + S</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'e'])">Win + E (Files)</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'r'])">Win + R (Run)</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'shift', 'esc'])">Task Manager</button>
+            <button class="key-btn" onclick="sendKeyPress('enter')">Enter ↵</button>
+            <button class="key-btn" onclick="sendKeyPress('backspace')">Backspace ⌫</button>
+            <button class="key-btn" onclick="sendKeyPress('tab')">Tab ⇥</button>
+            <button class="key-btn" onclick="sendKeyPress('esc')">Escape</button>
+            <button class="key-btn" onclick="sendKeyPress('delete')">Delete</button>
+            <button class="key-btn" onclick="sendKeyPress('space')">Spacebar</button>
+            <button class="key-btn" onclick="sendKeyPress('f5')">F5 Refresh</button>
+            <button class="key-btn" onclick="sendKeyPress('f11')">F11 Fullscreen</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. CONTROLS & APPS VIEW -->
+      <section id="view-controls" class="view-panel">
+        <!-- Interactive App Search & Launcher -->
+        <div class="glass-section">
+          <div class="app-search-header">
+            <h3><i class="fa-brands fa-windows"></i> Search & Open Apps</h3>
+            <button class="btn-win-search" onclick="sendHotkey(['win', 's'])"><i class="fa-solid fa-magnifying-glass"></i> Win Search</button>
+          </div>
+          <div class="app-search-wrap">
+            <i class="fa-solid fa-search search-icon"></i>
+            <input type="text" id="app-search-input" placeholder="Search 150+ apps (Spotify, Chrome, Steam, Discord)..." autocomplete="off">
+            <button class="btn-clear-search" id="btn-clear-app-search" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div id="app-results-container" class="app-results-grid">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-volume-high"></i> Media & Volume</h3>
+          <div class="media-btn-row">
+            <button class="btn btn-ctrl" onclick="sendAction('vol_down')"><i class="fa-solid fa-volume-low"></i> Vol -</button>
+            <button class="btn btn-ctrl" onclick="sendAction('vol_mute')"><i class="fa-solid fa-volume-xmark"></i> Mute</button>
+            <button class="btn btn-ctrl" onclick="sendAction('vol_up')"><i class="fa-solid fa-volume-high"></i> Vol +</button>
+          </div>
+          <div class="media-btn-row" style="margin-top: 10px;">
+            <button class="btn btn-ctrl" onclick="sendAction('media_prev')"><i class="fa-solid fa-backward"></i> Prev</button>
+            <button class="btn btn-ctrl btn-accent" onclick="sendAction('media_play_pause')"><i class="fa-solid fa-play"></i> Play/Pause</button>
+            <button class="btn btn-ctrl" onclick="sendAction('media_next')"><i class="fa-solid fa-forward"></i> Next</button>
+          </div>
+        </div>
+
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-rocket"></i> Launch Applications</h3>
+          <div class="app-grid">
+            <button class="app-tile" onclick="launchApp('chrome')"><i class="fa-brands fa-chrome"></i><span>Chrome</span></button>
+            <button class="app-tile" onclick="launchApp('code')"><i class="fa-solid fa-code"></i><span>VS Code</span></button>
+            <button class="app-tile" onclick="launchApp('terminal')"><i class="fa-solid fa-terminal"></i><span>Terminal</span></button>
+            <button class="app-tile" onclick="launchApp('explorer')"><i class="fa-solid fa-folder-open"></i><span>Explorer</span></button>
+            <button class="app-tile" onclick="launchApp('taskmgr')"><i class="fa-solid fa-chart-line"></i><span>Task Mgr</span></button>
+            <button class="app-tile" onclick="launchApp('notepad')"><i class="fa-solid fa-file-lines"></i><span>Notepad</span></button>
+          </div>
+        </div>
+
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-power-off"></i> Power Management</h3>
+          <div class="power-btn-grid">
+            <button class="btn btn-warning" onclick="sendAction('lock_screen')"><i class="fa-solid fa-lock"></i> Lock PC</button>
+            <button class="btn btn-warning" onclick="sendAction('sleep_pc')"><i class="fa-solid fa-moon"></i> Sleep</button>
+            <button class="btn btn-danger" onclick="confirmAction('restart_pc', 'Restart Laptop?')"><i class="fa-solid fa-rotate-right"></i> Restart</button>
+            <button class="btn btn-danger" onclick="confirmAction('shutdown_pc', 'Shutdown Laptop?')"><i class="fa-solid fa-power-off"></i> Shutdown</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. TERMINAL VIEW -->
+      <section id="view-terminal" class="view-panel">
+        <div class="terminal-container">
+          <div class="terminal-header">
+            <span class="term-title"><i class="fa-solid fa-terminal"></i> PowerShell Remote Terminal</span>
+            <button class="btn-clear" id="btn-clear-term"><i class="fa-solid fa-trash"></i></button>
+          </div>
+          <div class="terminal-body" id="term-output">
+            <div class="term-line prompt-line">PowerShell Remote Console Initialized. Full Admin Access.</div>
+          </div>
+          <div class="terminal-input-bar">
+            <span class="ps-prompt">PS &gt;</span>
+            <input type="text" id="term-input" placeholder="Type PowerShell command (e.g. dir, ipconfig, sfc)..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <button id="btn-term-run" class="btn btn-primary"><i class="fa-solid fa-play"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. FILE EXPLORER VIEW -->
+      <section id="view-files" class="view-panel">
+        <div class="files-header">
+          <div class="breadcrumb" id="file-breadcrumb">C:\Users\Praashu</div>
+          <label class="btn-upload" for="file-upload-input"><i class="fa-solid fa-upload"></i> Upload</label>
+          <input type="file" id="file-upload-input" style="display: none;">
+        </div>
+        <div class="drive-shortcuts">
+          <button class="drive-chip" onclick="loadDirectory('C:\\Users\\Praashu')">Home</button>
+          <button class="drive-chip" onclick="loadDirectory('C:\\Users\\Praashu\\OneDrive\\Desktop')">Desktop</button>
+          <button class="drive-chip" onclick="loadDirectory('C:\\Users\\Praashu\\Downloads')">Downloads</button>
+          <button class="drive-chip" onclick="loadDirectory('C:\\Users\\Praashu\\Documents')">Documents</button>
+          <button class="drive-chip" onclick="loadDirectory('C:\\')">C:\</button>
+        </div>
+        <div class="files-list" id="files-container">
+          <div class="spinner"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-target="view-touchpad">
+        <i class="fa-solid fa-hand-pointer"></i>
+        <span>Touchpad</span>
+      </button>
+      <button class="nav-item" data-target="view-screen">
+        <i class="fa-solid fa-display"></i>
+        <span>Screen</span>
+      </button>
+      <button class="nav-item" data-target="view-keyboard">
+        <i class="fa-solid fa-keyboard"></i>
+        <span>Keys</span>
+      </button>
+      <button class="nav-item" data-target="view-controls">
+        <i class="fa-solid fa-sliders"></i>
+        <span>Controls</span>
+      </button>
+      <button class="nav-item" data-target="view-terminal">
+        <i class="fa-solid fa-terminal"></i>
+        <span>Terminal</span>
+      </button>
+      <button class="nav-item" data-target="view-files">
+        <i class="fa-solid fa-folder"></i>
+        <span>Files</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
