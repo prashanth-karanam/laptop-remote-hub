@@ -9,13 +9,14 @@
   <title>24/7 Remote Hub Portal</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --bg-dark: #070a14;
-      --bg-card: rgba(15, 22, 38, 0.72);
-      --bg-card-hover: rgba(20, 30, 52, 0.85);
-      --card-border: rgba(0, 210, 255, 0.12);
-      --card-border-glow: rgba(0, 210, 255, 0.35);
+      --bg-card: rgba(15, 22, 38, 0.75);
+      --bg-card-hover: rgba(22, 33, 58, 0.88);
+      --card-border: rgba(0, 210, 255, 0.14);
+      --card-border-glow: rgba(0, 210, 255, 0.45);
       --accent-cyan: #00d2ff;
       --accent-blue: #3a7bd5;
       --accent-green: #00e676;
@@ -37,9 +38,9 @@
     body {
       background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(circle at 10% 10%, rgba(0, 210, 255, 0.08), transparent 35%),
-        radial-gradient(circle at 90% 20%, rgba(157, 78, 221, 0.09), transparent 40%),
-        radial-gradient(circle at 50% 90%, rgba(58, 123, 213, 0.08), transparent 45%);
+        radial-gradient(circle at 10% 10%, rgba(0, 210, 255, 0.09), transparent 35%),
+        radial-gradient(circle at 90% 20%, rgba(157, 78, 221, 0.10), transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(58, 123, 213, 0.09), transparent 45%);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
@@ -47,7 +48,6 @@
       overflow-x: hidden;
     }
 
-    /* Ambient Animated Grid Background */
     body::before {
       content: "";
       position: fixed;
@@ -65,10 +65,10 @@
 
     /* Top Navigation Header */
     header {
-      background: rgba(10, 15, 26, 0.85);
+      background: rgba(10, 15, 26, 0.88);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
       padding: 14px 20px;
       display: flex;
       justify-content: space-between;
@@ -124,9 +124,14 @@
       animation: radarPulse 2s infinite ease-in-out;
     }
 
+    .radar-dot.syncing {
+      background: var(--accent-amber);
+      box-shadow: 0 0 10px var(--accent-amber);
+    }
+
     @keyframes radarPulse {
       0% { transform: scale(0.8); opacity: 0.6; }
-      50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 16px var(--accent-green); }
+      50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 16px currentColor; }
       100% { transform: scale(0.8); opacity: 0.6; }
     }
 
@@ -159,7 +164,7 @@
     /* Main Container */
     main {
       flex: 1;
-      max-width: 840px;
+      max-width: 860px;
       width: 100%;
       margin: 0 auto;
       padding: 20px 16px 50px;
@@ -205,6 +210,11 @@
       border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.08);
       font-weight: 600;
+    }
+
+    .channel-controls {
+      display: flex;
+      gap: 8px;
     }
 
     .btn-change-channel {
@@ -259,7 +269,7 @@
     .device-grid {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 18px;
     }
 
     .device-card {
@@ -267,17 +277,17 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 22px;
-      padding: 20px;
+      border-radius: 24px;
+      padding: 22px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
       transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
     }
 
     .device-card:hover {
       border-color: var(--card-border-glow);
-      box-shadow: 0 16px 44px rgba(0, 210, 255, 0.15);
+      box-shadow: 0 18px 48px rgba(0, 210, 255, 0.18);
     }
 
     .device-card::before {
@@ -305,21 +315,21 @@
     }
 
     .device-icon-box {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(58, 123, 213, 0.2));
-      border: 1px solid rgba(0, 210, 255, 0.3);
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(58, 123, 213, 0.22));
+      border: 1px solid rgba(0, 210, 255, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       color: var(--accent-cyan);
-      box-shadow: 0 0 16px rgba(0, 210, 255, 0.2);
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.25);
     }
 
     .device-names h3 {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       font-weight: 800;
       color: #fff;
       letter-spacing: -0.2px;
@@ -341,9 +351,15 @@
       color: var(--accent-green);
       font-size: 0.75rem;
       font-weight: 700;
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: 20px;
       white-space: nowrap;
+    }
+
+    .status-badge.syncing {
+      background: rgba(255, 183, 3, 0.12);
+      border-color: rgba(255, 183, 3, 0.35);
+      color: var(--accent-amber);
     }
 
     .telemetry-row {
@@ -351,10 +367,10 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       margin-bottom: 18px;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.45);
       padding: 12px 14px;
       border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .telem-item {
@@ -386,9 +402,11 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
-    .action-buttons {
+    /* Primary & Secondary Action Buttons */
+    .primary-action-wrap {
       display: flex;
       gap: 10px;
+      margin-bottom: 10px;
     }
 
     .btn-connect {
@@ -396,7 +414,7 @@
       background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
       color: #000;
       border: none;
-      padding: 14px 18px;
+      padding: 15px 20px;
       border-radius: 14px;
       font-size: 0.95rem;
       font-weight: 800;
@@ -419,7 +437,7 @@
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.12);
       color: var(--text-main);
-      padding: 14px 16px;
+      padding: 15px 18px;
       border-radius: 14px;
       font-size: 0.95rem;
       font-weight: 700;
@@ -433,6 +451,39 @@
 
     .btn-embed-mirror:active {
       background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* Secondary Fast-Action Pill Row */
+    .secondary-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .action-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .action-pill:hover, .action-pill:active {
+      background: rgba(0, 210, 255, 0.12);
+      border-color: rgba(0, 210, 255, 0.3);
+      color: var(--text-main);
+    }
+
+    .action-pill i {
+      color: var(--accent-cyan);
     }
 
     /* Radar Empty State */
@@ -500,7 +551,7 @@
     .empty-state p {
       font-size: 0.88rem;
       color: var(--text-muted);
-      max-width: 420px;
+      max-width: 440px;
       line-height: 1.6;
     }
 
@@ -534,8 +585,8 @@
     }
 
     .embed-header {
-      background: #0d1117;
-      padding: 10px 16px;
+      background: #0a0e17;
+      padding: 12px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -550,30 +601,31 @@
     }
 
     .btn-close-embed {
-      background: var(--danger);
-      color: #fff;
-      border: none;
+      background: rgba(255, 71, 87, 0.15);
+      border: 1px solid rgba(255, 71, 87, 0.35);
+      color: var(--danger);
       padding: 6px 14px;
-      border-radius: 8px;
-      font-weight: 700;
+      border-radius: 10px;
       cursor: pointer;
+      font-weight: 700;
+      font-size: 0.85rem;
     }
 
-    /* Channel Settings Modal */
+    /* Modals & Popups */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       display: none;
       align-items: center;
       justify-content: center;
+      z-index: 2000;
       padding: 20px;
-      z-index: 999;
     }
 
     .modal-overlay.active {
@@ -581,24 +633,23 @@
     }
 
     .modal-card {
-      background: #0d121f;
-      border: 1px solid rgba(0, 210, 255, 0.25);
+      background: #0f1626;
+      border: 1px solid rgba(0, 210, 255, 0.3);
       border-radius: 20px;
-      padding: 24px;
-      width: 100%;
       max-width: 420px;
+      width: 100%;
+      padding: 24px;
       display: flex;
       flex-direction: column;
       gap: 16px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
     }
 
     .modal-card h3 {
       font-size: 1.15rem;
-      font-weight: 800;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .modal-card input {
@@ -641,6 +692,98 @@
       background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
       color: #000;
     }
+
+    /* QR Code Display in Modal */
+    #qr-container {
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      background: #0a0e17;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    #qr-container canvas, #qr-container img {
+      border-radius: 8px;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(15, 22, 38, 0.95);
+      border: 1px solid var(--accent-cyan);
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 210, 255, 0.3);
+      z-index: 3000;
+      pointer-events: none;
+      transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Troubleshooting Accordion */
+    .help-section {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .help-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .help-header h4 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .help-content {
+      padding: 0 18px 16px;
+      display: none;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .help-content.active {
+      display: block;
+    }
+
+    .help-item {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .help-item strong {
+      color: var(--text-main);
+      display: block;
+      margin-bottom: 2px;
+    }
   </style>
 </head>
 <body>
@@ -651,7 +794,7 @@
       <div class="brand-icon"><i class="fa-solid fa-satellite-dish"></i></div>
       <div class="brand-text">
         <h1>24/7 Remote Hub</h1>
-        <p><span class="radar-dot"></span> Live Device Registry</p>
+        <p><span class="radar-dot" id="header-radar"></span> Live Device Registry</p>
       </div>
     </div>
     <div class="header-actions">
@@ -671,7 +814,9 @@
           <span class="channel-name" id="current-channel-label">praashu-remote-portal-247</span>
         </div>
       </div>
-      <button class="btn-change-channel" id="btn-edit-channel">Change</button>
+      <div class="channel-controls">
+        <button class="btn-change-channel" id="btn-edit-channel">Change</button>
+      </div>
     </div>
 
     <!-- Active Devices Header -->
@@ -689,8 +834,30 @@
           <div class="radar-center-icon"><i class="fa-solid fa-wifi"></i></div>
         </div>
         <h3>Scanning for Online Laptops...</h3>
-        <p>Run <b>START_REMOTE_24_7.bat</b> on any computer (yours or your friend's). It will automatically register and show up here in real-time!</p>
+        <p>Run <b>START_REMOTE_24_7.bat</b> on any computer. Its live mirror link will automatically broadcast here in real time!</p>
         <div class="code-chip">START_REMOTE_24_7.bat</div>
+      </div>
+    </div>
+
+    <!-- Edge Health & Troubleshooting Guide -->
+    <div class="help-section">
+      <div class="help-header" id="help-toggle">
+        <h4><i class="fa-solid fa-circle-question" style="color:var(--accent-cyan)"></i> Connection Guide & Edge Diagnosis</h4>
+        <i class="fa-solid fa-chevron-down" id="help-chevron" style="color:var(--text-muted); font-size:0.8rem;"></i>
+      </div>
+      <div class="help-content" id="help-body">
+        <div class="help-item">
+          <strong>Why do I see Cloudflare Error 1033 on first launch?</strong>
+          Cloudflare's Anycast Edge Network takes approximately 5–10 seconds to propagate new ephemeral DNS routes worldwide. If you tap within the first few seconds of PC startup, wait 5 seconds and tap Refresh!
+        </div>
+        <div class="help-item">
+          <strong>Local Wi-Fi Direct Mode (Zero Lag):</strong>
+          If your phone and laptop are connected to the same Wi-Fi network, tap <b>📶 Local Wi-Fi</b> on the computer card to bypass Cloudflare completely for instantaneous 60 FPS response!
+        </div>
+        <div class="help-item">
+          <strong>Immortal 24/7 Resilience:</strong>
+          Free quick tunnels auto-refresh every ~75 minutes before Cloudflare edge evicts the session. The Hub auto-detects stalled retries and re-announces the fresh link right here automatically!
+        </div>
       </div>
     </div>
   </main>
@@ -698,10 +865,20 @@
   <!-- Fullscreen Embedded Mirror Modal -->
   <div id="embed-modal">
     <div class="embed-header">
-      <span id="embed-title" style="font-weight:700; font-size:0.9rem;">Remote Desktop Stream</span>
+      <span id="embed-title" style="font-weight:700; font-size:0.9rem; color:#fff;">Remote Desktop Stream</span>
       <button class="btn-close-embed" id="btn-close-embed"><i class="fa-solid fa-xmark"></i> Close</button>
     </div>
     <iframe id="embed-iframe" class="embed-iframe" src="about:blank" allow="fullscreen; clipboard-read; clipboard-write; autoplay"></iframe>
+  </div>
+
+  <!-- QR Code Modal -->
+  <div class="modal-overlay" id="qr-modal">
+    <div class="modal-card">
+      <h3><i class="fa-solid fa-qrcode" style="color:var(--accent-cyan)"></i> Direct Connect QR</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted);" id="qr-modal-desc">Scan with another phone or camera to mirror instantly.</p>
+      <div id="qr-container"></div>
+      <button class="btn-modal btn-modal-cancel" id="btn-close-qr">Close</button>
+    </div>
   </div>
 
   <!-- Channel Settings Modal -->
@@ -716,6 +893,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast Notification -->
+  <div id="toast"><i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i> <span id="toast-text">Link copied!</span></div>
 
   <script>
     const DEFAULT_CHANNEL = "praashu-remote-portal-247";
@@ -732,17 +912,39 @@
     const channelInput = document.getElementById("channel-input");
     const btnCancelModal = document.getElementById("btn-cancel-modal");
     const btnSaveModal = document.getElementById("btn-save-modal");
+    const toast = document.getElementById("toast");
+    const toastText = document.getElementById("toast-text");
 
     const embedModal = document.getElementById("embed-modal");
     const embedIframe = document.getElementById("embed-iframe");
     const embedTitle = document.getElementById("embed-title");
     const btnCloseEmbed = document.getElementById("btn-close-embed");
 
+    const qrModal = document.getElementById("qr-modal");
+    const qrContainer = document.getElementById("qr-container");
+    const btnCloseQr = document.getElementById("btn-close-qr");
+
+    const helpToggle = document.getElementById("help-toggle");
+    const helpBody = document.getElementById("help-body");
+    const helpChevron = document.getElementById("help-chevron");
+
     channelLabel.textContent = currentChannel;
+
+    helpToggle.addEventListener("click", () => {
+      helpBody.classList.toggle("active");
+      helpChevron.classList.toggle("fa-chevron-up");
+      helpChevron.classList.toggle("fa-chevron-down");
+    });
+
+    function showToast(msg) {
+      toastText.textContent = msg;
+      toast.classList.add("show");
+      try { navigator.vibrate(20); } catch(e) {}
+      setTimeout(() => toast.classList.remove("show"), 2500);
+    }
 
     function isValidPublicUrl(url) {
       if (!url) return false;
-      // Filter out dummy test URLs
       if (url.includes("test-tunnel") || url.includes("example.com")) return false;
       if (url.startsWith("https://") || url.startsWith("http://")) return true;
       return false;
@@ -764,7 +966,7 @@
         channelLabel.textContent = currentChannel;
         knownDevices.clear();
         channelModal.classList.remove("active");
-        pollRegistry();
+        connectRegistryStream();
       }
     });
 
@@ -772,6 +974,38 @@
       embedIframe.src = "about:blank";
       embedModal.classList.remove("active");
     });
+
+    btnCloseQr.addEventListener("click", () => {
+      qrModal.classList.remove("active");
+    });
+
+    function copyToClipboard(text, label) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`${label} copied to clipboard!`);
+      }).catch(() => {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        showToast(`${label} copied!`);
+      });
+    }
+
+    function showQrForUrl(url, name) {
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: url,
+        width: 220,
+        height: 220,
+        colorDark: "#00d2ff",
+        colorLight: "#0a0e17",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      document.getElementById("qr-modal-desc").textContent = `Scan to connect directly to ${name}`;
+      qrModal.classList.add("active");
+    }
 
     async function pollRegistry() {
       try {
@@ -788,8 +1022,7 @@
             const item = JSON.parse(line);
             if (item.event === "message" && item.message) {
               const data = JSON.parse(item.message);
-              if (data.device_id && isValidPublicUrl(data.public_url)) {
-                // Keep only fresh entries from last 4 hours
+              if (data.device_id && (isValidPublicUrl(data.public_url) || isValidPublicUrl(data.local_url))) {
                 const age = now - (data.timestamp || item.time || 0);
                 if (age < 14400) {
                   knownDevices.set(data.device_id, data);
@@ -809,7 +1042,6 @@
       const devices = Array.from(knownDevices.values());
       const now = Math.floor(Date.now() / 1000);
 
-      // Filter and sort by latest activity
       const validDevices = devices.filter(d => isValidPublicUrl(d.public_url) || isValidPublicUrl(d.local_url));
       const activeDevices = validDevices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
@@ -833,12 +1065,21 @@
 
       let html = "";
       activeDevices.forEach(dev => {
-        const targetUrl = dev.connect_url || `${dev.public_url}?pin=${dev.pin || '1234'}`;
         const pin = dev.pin || "1234";
-        const res = dev.resolution || "1080p";
+        const targetUrl = dev.connect_url || (dev.public_url ? `${dev.public_url}?pin=${pin}` : `${dev.local_url}?pin=${pin}`);
+        const localTargetUrl = dev.local_url ? `${dev.local_url}?pin=${pin}` : "";
+        const res = dev.resolution || "1920x1080";
         const bat = dev.battery || "100%";
+        const plugged = dev.power_plugged;
+        const batIcon = plugged ? '<i class="fa-solid fa-bolt" style="color:var(--accent-amber)"></i> ' : '<i class="fa-solid fa-battery-half"></i> ';
         const ageSec = Math.max(0, now - (dev.timestamp || now));
         const timeAgo = ageSec < 60 ? `${ageSec}s ago` : `${Math.floor(ageSec / 60)}m ago`;
+
+        // Check if tunnel is in edge DNS propagation settling phase (< 12 seconds)
+        const isSyncing = ageSec < 12 && dev.public_url;
+        const statusBadge = isSyncing 
+          ? `<div class="status-badge syncing"><span class="radar-dot syncing"></span> Edge Syncing (${Math.max(1, 12 - ageSec)}s)</div>`
+          : `<div class="status-badge"><span class="radar-dot"></span> Live (${timeAgo})</div>`;
 
         html += `
           <div class="device-card">
@@ -850,7 +1091,7 @@
                   <p>ID: ${dev.device_id}</p>
                 </div>
               </div>
-              <div class="status-badge"><span class="radar-dot"></span> Live (${timeAgo})</div>
+              ${statusBadge}
             </div>
 
             <div class="telemetry-row">
@@ -859,7 +1100,7 @@
                 <span class="telem-val">${res}</span>
               </div>
               <div class="telem-item">
-                <span class="telem-label"><i class="fa-solid fa-battery-half"></i> Battery</span>
+                <span class="telem-label">${batIcon} Battery</span>
                 <span class="telem-val">${bat}</span>
               </div>
               <div class="telem-item">
@@ -868,12 +1109,28 @@
               </div>
             </div>
 
-            <div class="action-buttons">
-              <a href="${targetUrl}" target="_blank" class="btn-connect">
-                <i class="fa-solid fa-bolt"></i> ⚡ Connect & Mirror (60 FPS)
+            <!-- Primary Direct Connect Buttons -->
+            <div class="primary-action-wrap">
+              <a href="${targetUrl}" target="_blank" class="btn-connect" onclick="showToast('Connecting 60 FPS Mirror...')">
+                <i class="fa-solid fa-bolt"></i> ⚡ Connect & Mirror (60 FPS Ultra HD)
               </a>
-              <button class="btn-embed-mirror" onclick="openEmbeddedMirror('${targetUrl}', '${dev.device_name}')" title="Open In Portal">
+              <button class="btn-embed-mirror" onclick="openEmbeddedMirror('${targetUrl}', '${dev.device_name}')" title="Open Fullscreen in Portal">
                 <i class="fa-solid fa-window-maximize"></i>
+              </button>
+            </div>
+
+            <!-- Secondary Fast Action Pills -->
+            <div class="secondary-pills-row">
+              ${localTargetUrl ? `
+                <a href="${localTargetUrl}" target="_blank" class="action-pill" title="Zero Internet Lag (Same Wi-Fi)">
+                  <i class="fa-solid fa-wifi"></i> 📶 Local Wi-Fi Direct
+                </a>
+              ` : ''}
+              <button class="action-pill" onclick="showQrForUrl('${targetUrl}', '${dev.device_name}')">
+                <i class="fa-solid fa-qrcode"></i> QR Code
+              </button>
+              <button class="action-pill" onclick="copyToClipboard('${targetUrl}', 'Global HTTPS Link')">
+                <i class="fa-solid fa-copy"></i> Copy Link
               </button>
             </div>
           </div>
@@ -896,10 +1153,10 @@
         try { eventSource.close(); } catch(e) {}
       }
 
-      // 1. Initial quick snapshot poll
+      // Initial quick snapshot poll
       pollRegistry();
 
-      // 2. Real-time persistent SSE stream (Zero polling overhead, sub-second latency)
+      // Real-time persistent SSE stream
       try {
         eventSource = new EventSource(`https://ntfy.sh/${currentChannel}/sse`);
         
@@ -908,7 +1165,7 @@
             const item = JSON.parse(e.data);
             if (item.event === "message" && item.message) {
               const data = JSON.parse(item.message);
-              if (data.device_id && isValidPublicUrl(data.public_url)) {
+              if (data.device_id && (isValidPublicUrl(data.public_url) || isValidPublicUrl(data.local_url))) {
                 knownDevices.set(data.device_id, data);
                 renderDevices();
               }
@@ -927,14 +1184,15 @@
     // Connect SSE stream on startup
     connectRegistryStream();
 
-    // Gentle heartbeat refresh every 10s
-    setInterval(renderDevices, 8000);
+    // Gentle heartbeat refresh every 6s
+    setInterval(renderDevices, 6000);
 
     btnRefresh.addEventListener("click", () => {
       btnRefresh.querySelector("i").classList.add("fa-spin");
       pollRegistry().then(() => {
         setTimeout(() => btnRefresh.querySelector("i").classList.remove("fa-spin"), 500);
       });
+      showToast("Refreshed device registry");
     });
   </script>
 </body>

@@ -69,6 +69,13 @@ def get_device_info():
 
 def broadcast_beacon(public_url: str, local_url: str, pin: str = "1234"):
     """Publishes live connection credentials & health status to 24/7 Cloud Registry."""
+    if not public_url and not local_url:
+        return
+
+    # Filter out dummy/mock test URLs
+    if public_url and ("test-tunnel" in public_url or "example.com" in public_url):
+        return
+
     channel = get_portal_channel()
     dev = get_device_info()
 
@@ -83,7 +90,7 @@ def broadcast_beacon(public_url: str, local_url: str, pin: str = "1234"):
         "battery": f"{dev['battery_pct']}%",
         "power_plugged": dev["power_plugged"],
         "cpu": f"{dev['cpu_pct']}%",
-        "status": "online",
+        "status": "ready" if public_url else "lan_only",
         "timestamp": int(time.time()),
         "connect_url": f"{public_url or local_url}?pin={pin}"
     }
@@ -92,11 +99,12 @@ def broadcast_beacon(public_url: str, local_url: str, pin: str = "1234"):
     try:
         ntfy_url = f"https://ntfy.sh/{channel}"
         data_bytes = json.dumps(payload).encode("utf-8")
+        safe_title = f"{dev['device_name']} Online".encode("ascii", "ignore").decode("ascii").strip()
         req = urllib.request.Request(
             ntfy_url,
             data=data_bytes,
             headers={
-                "Title": f"💻 {dev['device_name']} Online",
+                "Title": safe_title or "Laptop Online",
                 "Tags": "computer,satellite,link",
                 "User-Agent": "LaptopRemoteHub-Beacon/2.0"
             },
@@ -149,6 +157,4 @@ def start_portal_beacon_thread(get_public_url, get_local_url, get_pin):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
-    print("Testing Portal Beacon...")
-    broadcast_beacon("https://test-tunnel.trycloudflare.com", "http://192.168.1.100:8765", "1234")
-    print("Beacon test complete.")
+    print("Portal Beacon module ready.")

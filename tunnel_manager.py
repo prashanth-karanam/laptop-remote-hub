@@ -172,39 +172,84 @@ class ResilientTunnel:
     def __init__(self, port=8765, pin="1234"):
         self.port = port
         self.pin = pin
+        self.candidate_url = None
         self.public_url = None
         self.local_url = f"http://{get_local_ip()}:{self.port}?pin={self.pin}"
         self.process = None
         self.is_running = True
+        self.is_edge_registered = False
         self._url_event = threading.Event()
         self._reader_thread = None
+        self.tunnel_spawn_time = 0
+        self.last_reconnect_attempt = 0
+        self.reconnect_counter = 0
+        self.needs_respawn = False
+        self._spawn_lock = threading.Lock()
 
     def _pipe_drainer(self, proc):
-        """Continuously reads lines from cloudflared stdout/stderr to prevent OS pipe buffer deadlocks."""
+        """Continuously reads lines from cloudflared stdout/stderr to prevent OS pipe buffer deadlocks and detect edge events."""
         try:
             for line in iter(proc.stdout.readline, ''):
                 if not line:
                     break
                 line_str = line.strip()
-                
-                # Parse trycloudflare URL
-                if not self.public_url and "trycloudflare.com" in line_str:
+
+                # 1. Parse trycloudflare URL candidate dynamically
+                if "trycloudflare.com" in line_str:
                     matches = re.findall(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com", line_str)
                     for m in matches:
                         if "api.trycloudflare.com" not in m:
-                            self.public_url = f"{m}?pin={self.pin}"
-                            logger.info(f"Assigned Tunnel URL: {self.public_url}")
-                            self._url_event.set()
-                            update_shortcuts_and_qr(self.public_url, self.local_url, self.pin)
+                            candidate = f"{m}?pin={self.pin}"
+                            if candidate != self.candidate_url:
+                                self.candidate_url = candidate
+                                logger.info(f"Assigned Tunnel URL candidate: {self.candidate_url} (Awaiting edge registration...)")
                             break
-                elif "Registered tunnel connection" in line_str:
-                    self._url_event.set()
+
+                # 2. Detect genuine Edge Registration handshake
+                # Cloudflare logs: 'INF Registered tunnel connection connIndex=0 ...'
+                if "Registered tunnel connection" in line_str or "Connection registered" in line_str:
+                    self.is_edge_registered = True
+                    self.reconnect_counter = 0
+                    self.last_reconnect_attempt = 0
+                    logger.info("Cloudflare Edge Handshake Confirmed (Registered tunnel connection).")
+
+                    if self.candidate_url and self.candidate_url != self.public_url:
+                        # Allow 3.5s settling buffer for global Anycast Edge DNS propagation before broadcasting
+                        def propagate_and_publish():
+                            time.sleep(3.5)
+                            if self.is_running and proc.poll() is None and self.candidate_url:
+                                self.public_url = self.candidate_url
+                                logger.info(f"[PROVISIONAL -> LIVE] Tunnel URL ready & active: {self.public_url}")
+                                self._url_event.set()
+                                update_shortcuts_and_qr(self.public_url, self.local_url, self.pin)
+                        threading.Thread(target=propagate_and_publish, daemon=True).start()
+                    else:
+                        self._url_event.set()
+
+                # 3. Detect Stuck Reconnect Loops (The 1-Hour Ephemeral Session Drop / Eviction Bug)
+                if "Retrying connection" in line_str:
+                    now = time.time()
+                    if self.last_reconnect_attempt == 0:
+                        self.last_reconnect_attempt = now
+                    self.reconnect_counter += 1
+
+                    # If retrying connection continuously for > 25 seconds or >= 6 consecutive retries:
+                    if (now - self.last_reconnect_attempt > 25) or (self.reconnect_counter >= 6):
+                        logger.warning(
+                            f"Tunnel connection stuck in retry loop ({self.reconnect_counter} retries, {int(now - self.last_reconnect_attempt)}s). "
+                            "Flagging for auto-healing respawn..."
+                        )
+                        self.needs_respawn = True
 
                 # Log important lines without spamming
                 if "ERR" in line_str or "error" in line_str.lower():
-                    logger.warning(f"[Cloudflare] {line_str}")
+                    if "connection closed" in line_str.lower() or "quic" in line_str.lower():
+                        logger.warning(f"[Cloudflare Edge] {line_str}")
+                    else:
+                        logger.warning(f"[Cloudflare] {line_str}")
                 elif "Retrying connection" in line_str:
                     logger.info(f"[Cloudflare] {line_str}")
+
         except Exception as e:
             logger.debug(f"Pipe drainer closed: {e}")
 
@@ -225,131 +270,136 @@ class ResilientTunnel:
             self.process = None
 
     def _spawn_tunnel(self):
-        self._kill_proc_tree()
-        self._url_event.clear()
-        self.public_url = None
+        with self._spawn_lock:
+            self._kill_proc_tree()
+            self._url_event.clear()
+            self.candidate_url = None
+            self.public_url = None
+            self.is_edge_registered = False
+            self.reconnect_counter = 0
+            self.last_reconnect_attempt = 0
+            self.needs_respawn = False
+            self.tunnel_spawn_time = time.time()
 
-        binary = ensure_cloudflared()
-        if not binary:
-            logger.error("Cloudflared binary not available. Operating in LAN-only mode.")
-            update_shortcuts_and_qr(None, self.local_url, self.pin)
-            return None
+            binary = ensure_cloudflared()
+            if not binary:
+                logger.error("Cloudflared binary not available. Operating in LAN-only mode.")
+                update_shortcuts_and_qr(None, self.local_url, self.pin)
+                return None
 
-        cfg = load_custom_config()
-        token = cfg.get("cloudflare_token") or os.environ.get("CLOUDFLARE_TUNNEL_TOKEN")
-        custom_domain = cfg.get("custom_domain")
+            cfg = load_custom_config()
+            token = cfg.get("cloudflare_token") or os.environ.get("CLOUDFLARE_TUNNEL_TOKEN")
+            custom_domain = cfg.get("custom_domain")
 
-        if token:
-            logger.info("Spawning persistent Cloudflare Named Tunnel via Token...")
-            cmd = [
-                binary, "tunnel", "run",
-                "--token", token,
-                "--no-autoupdate",
-                "--protocol", "auto",
-                "--heartbeat-count", "5",
-                "--heartbeat-interval", "5s"
-            ]
-            if custom_domain:
-                self.public_url = f"https://{custom_domain}?pin={self.pin}"
-        else:
-            logger.info("Spawning Cloudflare Global Quick Tunnel with auto keep-alives...")
-            cmd = [
-                binary, "tunnel",
-                "--url", f"http://127.0.0.1:{self.port}",
-                "--no-autoupdate",
-                "--protocol", "auto",
-                "--edge-ip-version", "auto",
-                "--heartbeat-count", "5",
-                "--heartbeat-interval", "5s",
-                "--retries", "10"
-            ]
+            if token:
+                logger.info("Spawning persistent Cloudflare Named Tunnel via Token (HTTP2/TCP443)...")
+                cmd = [
+                    binary, "tunnel", "run",
+                    "--token", token,
+                    "--no-autoupdate",
+                    "--protocol", "http2",
+                    "--edge-ip-version", "4",
+                    "--heartbeat-count", "10",
+                    "--heartbeat-interval", "5s"
+                ]
+                if custom_domain:
+                    self.public_url = f"https://{custom_domain}?pin={self.pin}"
+            else:
+                logger.info("Spawning Cloudflare Global Quick Tunnel (HTTP2/TCP443 IPv4) with auto keep-alives...")
+                cmd = [
+                    binary, "tunnel",
+                    "--url", f"http://127.0.0.1:{self.port}",
+                    "--no-autoupdate",
+                    "--protocol", "http2",
+                    "--edge-ip-version", "4",
+                    "--heartbeat-count", "10",
+                    "--heartbeat-interval", "5s",
+                    "--retries", "30"
+                ]
 
-        try:
-            self.process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="ignore",
-                bufsize=1
+            try:
+                self.process = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    encoding="utf-8",
+                    errors="ignore",
+                    bufsize=1
+                )
+            except Exception as e:
+                logger.error(f"Failed to start cloudflared process: {e}")
+                return None
+
+            # Start continuous stdout drainer thread immediately
+            self._reader_thread = threading.Thread(
+                target=self._pipe_drainer,
+                args=(self.process,),
+                daemon=True
             )
-        except Exception as e:
-            logger.error(f"Failed to start cloudflared process: {e}")
-            return None
+            self._reader_thread.start()
 
-        # Start continuous stdout drainer thread immediately
-        self._reader_thread = threading.Thread(
-            target=self._pipe_drainer,
-            args=(self.process,),
-            daemon=True
-        )
-        self._reader_thread.start()
+            if token and custom_domain:
+                self._url_event.set()
+            else:
+                # Wait up to 35 seconds for tunnel edge registration
+                self._url_event.wait(timeout=35)
 
-        if token and custom_domain:
-            self._url_event.set()
-        else:
-            # Wait up to 35 seconds for tunnel registration
-            self._url_event.wait(timeout=35)
+            self.local_url = f"http://{get_local_ip()}:{self.port}?pin={self.pin}"
+            update_shortcuts_and_qr(self.public_url, self.local_url, self.pin)
 
-        self.local_url = f"http://{get_local_ip()}:{self.port}?pin={self.pin}"
-        update_shortcuts_and_qr(self.public_url, self.local_url, self.pin)
+            print("\n" + "=" * 62, flush=True)
+            print("  LAPTOP REMOTE HUB - NETWORK CHANNELS READY", flush=True)
+            print("-" * 62, flush=True)
+            if self.public_url:
+                print(f"  [GLOBAL HTTPS] : {self.public_url}", flush=True)
+            print(f"  [LOCAL WI-FI]  : {self.local_url}", flush=True)
+            print("=" * 62 + "\n", flush=True)
 
-        print("\n" + "=" * 62, flush=True)
-        print("  LAPTOP REMOTE HUB - NETWORK CHANNELS READY", flush=True)
-        print("-" * 62, flush=True)
-        if self.public_url:
-            print(f"  [GLOBAL HTTPS] : {self.public_url}", flush=True)
-        print(f"  [LOCAL WI-FI]  : {self.local_url}", flush=True)
-        print("=" * 62 + "\n", flush=True)
-
-        return self.public_url
+            return self.public_url
 
     def _health_check_loop(self):
-        """Active health watchdog that probes tunnel and auto-heals only when needed."""
-        consecutive_errors = 0
-
+        """Active health watchdog: verifies process health and auto-revives only if genuinely crashed or stale."""
         while self.is_running:
-            time.sleep(20)
+            time.sleep(10)
             if not self.is_running:
                 break
 
-            # 1. First probe local server to verify FastAPI is alive
+            now = time.time()
+
+            # 1. Auto-Healing Reconnect Trap: Check if flagged for respawn due to stuck retry loop
+            if self.needs_respawn:
+                logger.warning("Reviving stale/dropped tunnel (Auto-Healing Reconnect Trap)...")
+                self.needs_respawn = False
+                self._spawn_tunnel()
+                continue
+
+            # 2. Check if cloudflared process terminated
+            if self.process is None or self.process.poll() is not None:
+                logger.warning("Cloudflare tunnel process terminated. Reviving tunnel daemon...")
+                self._spawn_tunnel()
+                continue
+
+            # 3. Ephemeral Quick Tunnel Maximum Session Age Protection (~75 min safety refresh)
+            # Free trycloudflare tunnels get forcefully recycled by Cloudflare edge after 60-90 minutes.
+            # Proactively recycling before the hard edge eviction prevents sudden dead link freezes.
+            cfg = load_custom_config()
+            has_token = bool(cfg.get("cloudflare_token") or os.environ.get("CLOUDFLARE_TUNNEL_TOKEN"))
+            if not has_token and self.tunnel_spawn_time > 0:
+                uptime_mins = (now - self.tunnel_spawn_time) / 60.0
+                if uptime_mins >= 75:
+                    logger.info(f"Quick Tunnel session age is {int(uptime_mins)}m (approaching Cloudflare 90m limit). Performing seamless session refresh...")
+                    self._spawn_tunnel()
+                    continue
+
+            # 4. Verify local server is listening
             try:
                 local_probe = f"http://127.0.0.1:{self.port}/api/health"
-                req_local = urllib.request.Request(local_probe, headers={"User-Agent": "Watchdog/1.0"})
-                with urllib.request.urlopen(req_local, timeout=5) as resp:
-                    if resp.getcode() != 200:
-                        continue
+                req_local = urllib.request.Request(local_probe, headers={"User-Agent": "TunnelWatchdog/2.0"})
+                with urllib.request.urlopen(req_local, timeout=4) as resp:
+                    pass
             except Exception:
-                # Local server starting or busy; skip tunnel probe
-                continue
-
-            # 2. Check public tunnel if available
-            if not self.public_url:
-                consecutive_errors += 1
-                if consecutive_errors >= 2:
-                    logger.warning("No public tunnel active. Attempting revival...")
-                    self._spawn_tunnel()
-                    consecutive_errors = 0
-                continue
-
-            try:
-                probe_url = f"{self.public_url.split('?')[0]}/api/health"
-                req = urllib.request.Request(probe_url, headers={"User-Agent": "TunnelWatchdog/2.0"})
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    if resp.getcode() == 200:
-                        consecutive_errors = 0
-                        continue
-            except Exception as e:
-                consecutive_errors += 1
-                logger.warning(f"Tunnel probe warning ({consecutive_errors}/3): {e}")
-
-            # Auto-heal only after 3 consecutive failures (approx 60-70s of dropped connection)
-            if consecutive_errors >= 3:
-                logger.error("Cloudflare tunnel dropped! Auto-healing & spawning fresh tunnel...")
-                self._spawn_tunnel()
-                consecutive_errors = 0
+                pass
 
     def start(self):
         self._spawn_tunnel()
