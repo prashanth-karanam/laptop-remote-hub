@@ -824,32 +824,53 @@
     }
 
     async function pollHubDevices() {
+      // 1. Check local/raw repository connection_info.json (unaffected by ntfy rate limits)
+      const endpoints = [
+        `./connection_info.json?t=${Date.now()}`,
+        `https://raw.githubusercontent.com/prashanth-karanam/laptop-remote-hub/main/connection_info.json?t=${Date.now()}`
+      ];
+
+      for (const ep of endpoints) {
+        try {
+          const r = await fetch(ep);
+          if (r.ok) {
+            const data = await r.json();
+            if (data && (isValidTarget(data.public_url) || isValidTarget(data.local_url))) {
+              const devId = data.device_id || "laptop-pc";
+              hubDevices.set(devId, data);
+            }
+          }
+        } catch(e) {}
+      }
+
+      // 2. Poll ntfy.sh channel
       try {
         const res = await fetch(`https://ntfy.sh/${HUB_CHANNEL}/json?poll=1`);
-        if (!res.ok) return;
-        const text = await res.text();
-        const lines = text.split("\n").filter(l => l.trim().length > 0);
-        const now = Math.floor(Date.now() / 1000);
+        if (res.ok) {
+          const text = await res.text();
+          const lines = text.split("\n").filter(l => l.trim().length > 0);
+          const now = Math.floor(Date.now() / 1000);
 
-        lines.forEach(line => {
-          try {
-            const item = JSON.parse(line);
-            if (item.event === "message" && item.message) {
-              const data = JSON.parse(item.message);
-              if (data.device_id && (isValidTarget(data.public_url) || isValidTarget(data.local_url))) {
-                const age = now - (data.timestamp || item.time || 0);
-                if (age < 14400) {
-                  hubDevices.set(data.device_id, data);
+          lines.forEach(line => {
+            try {
+              const item = JSON.parse(line);
+              if (item.event === "message" && item.message) {
+                const data = JSON.parse(item.message);
+                if (data.device_id && (isValidTarget(data.public_url) || isValidTarget(data.local_url))) {
+                  const age = now - (data.timestamp || item.time || 0);
+                  if (age < 14400) {
+                    hubDevices.set(data.device_id, data);
+                  }
                 }
               }
-            }
-          } catch(e) {}
-        });
-
-        renderHubDevices();
+            } catch(e) {}
+          });
+        }
       } catch (err) {
         console.warn("Hub poll error:", err);
       }
+
+      renderHubDevices();
     }
 
     function renderHubDevices() {
