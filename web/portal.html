@@ -889,8 +889,47 @@
       embedModal.classList.add("active");
     }
 
-    pollRegistry();
-    setInterval(pollRegistry, 3500);
+    let eventSource = null;
+
+    function connectRegistryStream() {
+      if (eventSource) {
+        try { eventSource.close(); } catch(e) {}
+      }
+
+      // 1. Initial quick snapshot poll
+      pollRegistry();
+
+      // 2. Real-time persistent SSE stream (Zero polling overhead, sub-second latency)
+      try {
+        eventSource = new EventSource(`https://ntfy.sh/${currentChannel}/sse`);
+        
+        eventSource.onmessage = (e) => {
+          try {
+            const item = JSON.parse(e.data);
+            if (item.event === "message" && item.message) {
+              const data = JSON.parse(item.message);
+              if (data.device_id && isValidPublicUrl(data.public_url)) {
+                knownDevices.set(data.device_id, data);
+                renderDevices();
+              }
+            }
+          } catch(err) {}
+        };
+
+        eventSource.onerror = () => {
+          // SSE retry handled automatically by browser
+        };
+      } catch(e) {
+        console.warn("SSE error, falling back to timer:", e);
+      }
+    }
+
+    // Connect SSE stream on startup
+    connectRegistryStream();
+
+    // Gentle heartbeat refresh every 10s
+    setInterval(renderDevices, 8000);
+
     btnRefresh.addEventListener("click", () => {
       btnRefresh.querySelector("i").classList.add("fa-spin");
       pollRegistry().then(() => {
