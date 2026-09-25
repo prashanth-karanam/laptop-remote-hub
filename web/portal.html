@@ -2,19 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#070a14">
   <title>24/7 Remote Hub Portal</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-dark: #070a12;
-      --bg-card: rgba(16, 23, 38, 0.75);
-      --card-border: rgba(255, 255, 255, 0.08);
+      --bg-dark: #070a14;
+      --bg-card: rgba(15, 22, 38, 0.72);
+      --bg-card-hover: rgba(20, 30, 52, 0.85);
+      --card-border: rgba(0, 210, 255, 0.12);
+      --card-border-glow: rgba(0, 210, 255, 0.35);
       --accent-cyan: #00d2ff;
       --accent-blue: #3a7bd5;
       --accent-green: #00e676;
       --accent-purple: #9d4edd;
+      --accent-amber: #ffb703;
       --text-main: #f0f6fc;
       --text-muted: #8b949e;
       --danger: #ff4757;
@@ -31,20 +37,38 @@
     body {
       background-color: var(--bg-dark);
       background-image: 
-        radial-gradient(circle at 15% 15%, rgba(0, 210, 255, 0.12), transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(157, 78, 221, 0.12), transparent 45%);
+        radial-gradient(circle at 10% 10%, rgba(0, 210, 255, 0.08), transparent 35%),
+        radial-gradient(circle at 90% 20%, rgba(157, 78, 221, 0.09), transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(58, 123, 213, 0.08), transparent 45%);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Animated Grid Background */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      pointer-events: none;
+      z-index: 0;
     }
 
     /* Top Navigation Header */
     header {
-      background: rgba(11, 17, 29, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--card-border);
+      background: rgba(10, 15, 26, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       padding: 14px 20px;
       display: flex;
       justify-content: space-between;
@@ -61,22 +85,25 @@
     }
 
     .brand-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
       background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.25rem;
       color: #000;
-      box-shadow: 0 0 16px rgba(0, 210, 255, 0.4);
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.45);
     }
 
     .brand-text h1 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: -0.3px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .brand-text p {
@@ -84,36 +111,37 @@
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
+      font-weight: 500;
     }
 
     .radar-dot {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
       background: var(--accent-green);
       border-radius: 50%;
-      box-shadow: 0 0 8px var(--accent-green);
-      animation: pulse 1.8s infinite;
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: radarPulse 2s infinite ease-in-out;
     }
 
-    @keyframes pulse {
-      0% { transform: scale(0.9); opacity: 0.7; }
-      50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 12px var(--accent-green); }
-      100% { transform: scale(0.9); opacity: 0.7; }
+    @keyframes radarPulse {
+      0% { transform: scale(0.8); opacity: 0.6; }
+      50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 16px var(--accent-green); }
+      100% { transform: scale(0.8); opacity: 0.6; }
     }
 
     .header-actions {
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
 
     .btn-icon-top {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       color: var(--text-main);
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -125,64 +153,74 @@
     .btn-icon-top:active {
       transform: scale(0.92);
       border-color: var(--accent-cyan);
+      background: rgba(0, 210, 255, 0.15);
     }
 
     /* Main Container */
     main {
       flex: 1;
-      max-width: 820px;
+      max-width: 840px;
       width: 100%;
       margin: 0 auto;
-      padding: 20px 16px 40px;
+      padding: 20px 16px 50px;
       display: flex;
       flex-direction: column;
       gap: 20px;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Channel Banner */
+    /* Channel Registry Banner */
     .channel-banner {
       background: var(--bg-card);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 14px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
     }
 
     .channel-info {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
     .channel-info i {
       color: var(--accent-cyan);
-      font-size: 1.1rem;
+      font-size: 1.25rem;
     }
 
     .channel-name {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       color: var(--text-main);
-      background: rgba(0, 0, 0, 0.4);
-      padding: 4px 8px;
-      border-radius: 6px;
-      border: 1px solid var(--card-border);
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 600;
     }
 
     .btn-change-channel {
-      background: rgba(0, 210, 255, 0.1);
-      border: 1px solid rgba(0, 210, 255, 0.3);
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(58, 123, 213, 0.25));
+      border: 1px solid rgba(0, 210, 255, 0.35);
       color: var(--accent-cyan);
-      padding: 6px 12px;
-      border-radius: 8px;
+      padding: 7px 14px;
+      border-radius: 10px;
       font-size: 0.8rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-change-channel:active {
+      transform: scale(0.95);
     }
 
     /* Section Header */
@@ -190,47 +228,56 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 5px;
+      margin-top: 4px;
     }
 
     .section-title h2 {
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 1px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
     .online-count {
-      background: rgba(0, 230, 118, 0.15);
+      background: rgba(0, 230, 118, 0.12);
       color: var(--accent-green);
       font-size: 0.75rem;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 12px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
       border: 1px solid rgba(0, 230, 118, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    /* Device Cards List */
+    /* Device Cards */
     .device-grid {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
     }
 
     .device-card {
       background: var(--bg-card);
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 18px;
+      border-radius: 22px;
+      padding: 20px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-      transition: transform 0.2s, border-color 0.2s;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .device-card:hover {
+      border-color: var(--card-border-glow);
+      box-shadow: 0 16px 44px rgba(0, 210, 255, 0.15);
     }
 
     .device-card::before {
@@ -240,45 +287,49 @@
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-green));
     }
 
     .card-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      gap: 10px;
     }
 
     .device-meta {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .device-icon-box {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: rgba(0, 210, 255, 0.1);
-      border: 1px solid rgba(0, 210, 255, 0.25);
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(58, 123, 213, 0.2));
+      border: 1px solid rgba(0, 210, 255, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       color: var(--accent-cyan);
+      box-shadow: 0 0 16px rgba(0, 210, 255, 0.2);
     }
 
     .device-names h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-main);
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.2px;
     }
 
     .device-names p {
       font-size: 0.78rem;
       color: var(--text-muted);
       font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
     }
 
     .status-badge {
@@ -290,25 +341,26 @@
       color: var(--accent-green);
       font-size: 0.75rem;
       font-weight: 700;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 20px;
+      white-space: nowrap;
     }
 
     .telemetry-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 16px;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 10px 12px;
-      border-radius: 12px;
+      gap: 10px;
+      margin-bottom: 18px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 12px 14px;
+      border-radius: 14px;
       border: 1px solid rgba(255, 255, 255, 0.04);
     }
 
     .telem-item {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
     }
 
     .telem-label {
@@ -316,12 +368,20 @@
       color: var(--text-muted);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .telem-label i {
+      color: var(--accent-cyan);
+      font-size: 0.75rem;
     }
 
     .telem-val {
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 0.88rem;
+      font-weight: 700;
       color: var(--text-main);
       font-family: 'JetBrains Mono', monospace;
     }
@@ -337,94 +397,126 @@
       color: #000;
       border: none;
       padding: 14px 18px;
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 0.95rem;
-      font-weight: 700;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       cursor: pointer;
       text-decoration: none;
-      box-shadow: 0 4px 18px rgba(0, 210, 255, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 210, 255, 0.4);
       transition: all 0.2s;
     }
 
     .btn-connect:active {
       transform: scale(0.97);
-      box-shadow: 0 2px 10px rgba(0, 210, 255, 0.5);
+      box-shadow: 0 2px 12px rgba(0, 210, 255, 0.6);
     }
 
     .btn-embed-mirror {
       background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--card-border);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       color: var(--text-main);
-      padding: 14px;
-      border-radius: 12px;
+      padding: 14px 16px;
+      border-radius: 14px;
       font-size: 0.95rem;
-      font-weight: 600;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
       cursor: pointer;
+      transition: all 0.2s;
     }
 
     .btn-embed-mirror:active {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.18);
     }
 
-    /* Empty Radar State */
+    /* Radar Empty State */
     .empty-state {
       background: var(--bg-card);
-      border: 1px dashed var(--card-border);
-      border-radius: 18px;
-      padding: 40px 20px;
+      backdrop-filter: blur(16px);
+      border: 1px dashed rgba(0, 210, 255, 0.25);
+      border-radius: 22px;
+      padding: 44px 20px;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
     }
 
-    .empty-radar {
-      width: 70px;
-      height: 70px;
-      border-radius: 50%;
-      background: rgba(0, 210, 255, 0.08);
-      border: 1px solid rgba(0, 210, 255, 0.25);
+    .empty-radar-wrap {
+      position: relative;
+      width: 90px;
+      height: 90px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.8rem;
+    }
+
+    .radar-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 210, 255, 0.3);
+      animation: ripple 2.4s infinite cubic-bezier(0.1, 0.8, 0.3, 1);
+    }
+
+    .radar-ring:nth-child(2) {
+      animation-delay: 0.8s;
+    }
+
+    @keyframes ripple {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .radar-center-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(58, 123, 213, 0.3));
+      border: 1px solid var(--accent-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
       color: var(--accent-cyan);
-      animation: pulse 2.2s infinite;
+      box-shadow: 0 0 20px rgba(0, 210, 255, 0.35);
+      z-index: 2;
     }
 
     .empty-state h3 {
-      font-size: 1.15rem;
-      font-weight: 700;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
     }
 
     .empty-state p {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
-      max-width: 440px;
-      line-height: 1.5;
+      max-width: 420px;
+      line-height: 1.6;
     }
 
     .code-chip {
-      background: rgba(0,0,0,0.6);
+      background: rgba(0, 0, 0, 0.6);
       color: var(--accent-cyan);
       font-family: 'JetBrains Mono', monospace;
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--card-border);
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 210, 255, 0.25);
       font-size: 0.85rem;
-      margin-top: 6px;
+      font-weight: 600;
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.15);
     }
 
-    /* Embedded Mirror Frame */
+    /* Embedded Mirror Modal */
     #embed-modal {
       position: fixed;
       top: 0;
@@ -442,12 +534,12 @@
     }
 
     .embed-header {
-      background: #111;
+      background: #0d1117;
       padding: 10px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .embed-iframe {
@@ -467,7 +559,7 @@
       cursor: pointer;
     }
 
-    /* Quick Channel Modal */
+    /* Channel Settings Modal */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -475,7 +567,8 @@
       right: 0;
       bottom: 0;
       background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -488,29 +581,40 @@
     }
 
     .modal-card {
-      background: #121826;
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
+      background: #0d121f;
+      border: 1px solid rgba(0, 210, 255, 0.25);
+      border-radius: 20px;
       padding: 24px;
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-card h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .modal-card input {
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid var(--card-border);
-      padding: 12px;
-      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 12px 14px;
+      border-radius: 12px;
       color: #fff;
-      font-size: 1rem;
+      font-size: 0.95rem;
       outline: none;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .modal-card input:focus {
       border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px rgba(0, 210, 255, 0.3);
     }
 
     .modal-btn-row {
@@ -521,14 +625,15 @@
     .btn-modal {
       flex: 1;
       padding: 12px;
-      border-radius: 10px;
-      font-weight: 700;
+      border-radius: 12px;
+      font-weight: 800;
       cursor: pointer;
       border: none;
+      font-size: 0.9rem;
     }
 
     .btn-modal-cancel {
-      background: rgba(255,255,255,0.08);
+      background: rgba(255, 255, 255, 0.08);
       color: var(--text-main);
     }
 
@@ -562,7 +667,7 @@
       <div class="channel-info">
         <i class="fa-solid fa-cloud"></i>
         <div>
-          <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Registry Channel:</span>
+          <span style="font-size:0.72rem; color:var(--text-muted); display:block; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Registry Channel:</span>
           <span class="channel-name" id="current-channel-label">praashu-remote-portal-247</span>
         </div>
       </div>
@@ -571,14 +676,18 @@
 
     <!-- Active Devices Header -->
     <div class="section-title">
-      <h2><i class="fa-solid fa-laptop"></i> Active Computers</h2>
+      <h2><i class="fa-solid fa-laptop"></i> Online Computers</h2>
       <span class="online-count" id="online-count-badge">0 Online</span>
     </div>
 
     <!-- Device List Container -->
     <div class="device-grid" id="devices-container">
       <div class="empty-state">
-        <div class="empty-radar"><i class="fa-solid fa-wifi"></i></div>
+        <div class="empty-radar-wrap">
+          <div class="radar-ring"></div>
+          <div class="radar-ring"></div>
+          <div class="radar-center-icon"><i class="fa-solid fa-wifi"></i></div>
+        </div>
         <h3>Scanning for Online Laptops...</h3>
         <p>Run <b>START_REMOTE_24_7.bat</b> on any computer (yours or your friend's). It will automatically register and show up here in real-time!</p>
         <div class="code-chip">START_REMOTE_24_7.bat</div>
@@ -598,7 +707,7 @@
   <!-- Channel Settings Modal -->
   <div class="modal-overlay" id="channel-modal">
     <div class="modal-card">
-      <h3><i class="fa-solid fa-key"></i> Registry Channel Key</h3>
+      <h3><i class="fa-solid fa-key" style="color:var(--accent-cyan)"></i> Registry Channel Key</h3>
       <p style="font-size:0.85rem; color:var(--text-muted);">Set the secret channel used by your computers to publish their live links.</p>
       <input type="text" id="channel-input" placeholder="e.g. praashu-remote-portal-247">
       <div class="modal-btn-row">
@@ -631,7 +740,14 @@
 
     channelLabel.textContent = currentChannel;
 
-    // Open Channel Modal
+    function isValidPublicUrl(url) {
+      if (!url) return false;
+      // Filter out dummy test URLs
+      if (url.includes("test-tunnel") || url.includes("example.com")) return false;
+      if (url.startsWith("https://") || url.startsWith("http://")) return true;
+      return false;
+    }
+
     function openChannelSettings() {
       channelInput.value = currentChannel;
       channelModal.classList.add("active");
@@ -657,7 +773,6 @@
       embedModal.classList.remove("active");
     });
 
-    // Poll live registry channel from ntfy.sh
     async function pollRegistry() {
       try {
         const url = `https://ntfy.sh/${currentChannel}/json?poll=1`;
@@ -666,7 +781,6 @@
 
         const text = await res.text();
         const lines = text.split("\n").filter(l => l.trim().length > 0);
-
         const now = Math.floor(Date.now() / 1000);
 
         lines.forEach(line => {
@@ -674,10 +788,10 @@
             const item = JSON.parse(line);
             if (item.event === "message" && item.message) {
               const data = JSON.parse(item.message);
-              if (data.device_id && data.public_url) {
-                // Check freshness (consider alive if updated in last 6 hours)
+              if (data.device_id && isValidPublicUrl(data.public_url)) {
+                // Keep only fresh entries from last 4 hours
                 const age = now - (data.timestamp || item.time || 0);
-                if (age < 21600) {
+                if (age < 14400) {
                   knownDevices.set(data.device_id, data);
                 }
               }
@@ -695,17 +809,22 @@
       const devices = Array.from(knownDevices.values());
       const now = Math.floor(Date.now() / 1000);
 
-      // Filter to online active devices
-      const activeDevices = devices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      // Filter and sort by latest activity
+      const validDevices = devices.filter(d => isValidPublicUrl(d.public_url) || isValidPublicUrl(d.local_url));
+      const activeDevices = validDevices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
       onlineBadge.textContent = `${activeDevices.length} Online`;
 
       if (activeDevices.length === 0) {
         devicesContainer.innerHTML = `
           <div class="empty-state">
-            <div class="empty-radar"><i class="fa-solid fa-wifi"></i></div>
+            <div class="empty-radar-wrap">
+              <div class="radar-ring"></div>
+              <div class="radar-ring"></div>
+              <div class="radar-center-icon"><i class="fa-solid fa-wifi"></i></div>
+            </div>
             <h3>Waiting for Laptops to Connect...</h3>
-            <p>Run <b>START_REMOTE_24_7.bat</b> on any PC. Its live mirror link will automatically broadcast here!</p>
+            <p>Run <b>START_REMOTE_24_7.bat</b> on any PC. Its live mirror link will automatically broadcast here in real time!</p>
             <div class="code-chip">START_REMOTE_24_7.bat</div>
           </div>
         `;
@@ -731,13 +850,13 @@
                   <p>ID: ${dev.device_id}</p>
                 </div>
               </div>
-              <div class="status-badge"><span class="radar-dot"></span> Online (${timeAgo})</div>
+              <div class="status-badge"><span class="radar-dot"></span> Live (${timeAgo})</div>
             </div>
 
             <div class="telemetry-row">
               <div class="telem-item">
                 <span class="telem-label"><i class="fa-solid fa-display"></i> Display</span>
-                <span class="telem-val">${res} (60 FPS)</span>
+                <span class="telem-val">${res}</span>
               </div>
               <div class="telem-item">
                 <span class="telem-label"><i class="fa-solid fa-battery-half"></i> Battery</span>
@@ -751,7 +870,7 @@
 
             <div class="action-buttons">
               <a href="${targetUrl}" target="_blank" class="btn-connect">
-                <i class="fa-solid fa-bolt"></i> Connect & Mirror (Full Screen)
+                <i class="fa-solid fa-bolt"></i> ⚡ Connect & Mirror (60 FPS)
               </a>
               <button class="btn-embed-mirror" onclick="openEmbeddedMirror('${targetUrl}', '${dev.device_name}')" title="Open In Portal">
                 <i class="fa-solid fa-window-maximize"></i>
@@ -770,9 +889,8 @@
       embedModal.classList.add("active");
     }
 
-    // Auto-poll loop every 4 seconds
     pollRegistry();
-    setInterval(pollRegistry, 4000);
+    setInterval(pollRegistry, 3500);
     btnRefresh.addEventListener("click", () => {
       btnRefresh.querySelector("i").classList.add("fa-spin");
       pollRegistry().then(() => {
