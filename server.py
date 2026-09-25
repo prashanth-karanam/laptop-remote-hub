@@ -50,6 +50,7 @@ sys.stderr = make_stream_safe(sys.stderr, LOG_FILE)
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import pyautogui
 import mss
@@ -73,6 +74,15 @@ WEB_DIR = os.path.join(BASE_DIR, "web")
 AUTH_PIN = "1234"  # Default security PIN
 
 app = FastAPI(title="Laptop Remote Hub")
+
+# Enable Cross-Origin Resource Sharing (CORS) for GitHub Pages remote control
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_screen_dimensions():

@@ -6,65 +6,34 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#070a14">
-  <title>24/7 Remote Hub Portal</title>
+  <title>Laptop Remote Hub — 24/7 Controller</title>
+  <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    :root {
-      --bg-dark: #070a14;
-      --bg-card: rgba(15, 22, 38, 0.75);
-      --bg-card-hover: rgba(22, 33, 58, 0.88);
-      --card-border: rgba(0, 210, 255, 0.14);
-      --card-border-glow: rgba(0, 210, 255, 0.45);
-      --accent-cyan: #00d2ff;
-      --accent-blue: #3a7bd5;
-      --accent-green: #00e676;
-      --accent-purple: #9d4edd;
-      --accent-amber: #ffb703;
-      --text-main: #f0f6fc;
-      --text-muted: #8b949e;
-      --danger: #ff4757;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      background-color: var(--bg-dark);
+    /* Integrated Hub Overlay Styling */
+    .hub-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: #070a14;
       background-image: 
         radial-gradient(circle at 10% 10%, rgba(0, 210, 255, 0.09), transparent 35%),
         radial-gradient(circle at 90% 20%, rgba(157, 78, 221, 0.10), transparent 40%),
         radial-gradient(circle at 50% 90%, rgba(58, 123, 213, 0.09), transparent 45%);
-      color: var(--text-main);
-      min-height: 100vh;
+      z-index: 5000;
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
       overflow-x: hidden;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-size: 32px 32px;
-      background-image: 
-        linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-      pointer-events: none;
-      z-index: 0;
+    .hub-overlay.hidden {
+      display: none !important;
     }
 
-    /* Top Navigation Header */
-    header {
+    .hub-header {
       background: rgba(10, 15, 26, 0.88);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
@@ -78,17 +47,17 @@
       z-index: 100;
     }
 
-    .brand {
+    .hub-brand {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .brand-icon {
+    .hub-brand-icon {
       width: 42px;
       height: 42px;
       border-radius: 14px;
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      background: linear-gradient(135deg, #00d2ff, #3a7bd5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -97,72 +66,24 @@
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.45);
     }
 
-    .brand-text h1 {
+    .hub-brand-text h1 {
       font-size: 1.2rem;
       font-weight: 800;
-      letter-spacing: -0.4px;
-      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan));
+      background: linear-gradient(135deg, #ffffff 40%, #00d2ff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    .brand-text p {
+    .hub-brand-text p {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: #8b949e;
       display: flex;
       align-items: center;
       gap: 6px;
       font-weight: 500;
     }
 
-    .radar-dot {
-      width: 8px;
-      height: 8px;
-      background: var(--accent-green);
-      border-radius: 50%;
-      box-shadow: 0 0 10px var(--accent-green);
-      animation: radarPulse 2s infinite ease-in-out;
-    }
-
-    .radar-dot.syncing {
-      background: var(--accent-amber);
-      box-shadow: 0 0 10px var(--accent-amber);
-    }
-
-    @keyframes radarPulse {
-      0% { transform: scale(0.8); opacity: 0.6; }
-      50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 16px currentColor; }
-      100% { transform: scale(0.8); opacity: 0.6; }
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-icon-top {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: all 0.2s;
-    }
-
-    .btn-icon-top:active {
-      transform: scale(0.92);
-      border-color: var(--accent-cyan);
-      background: rgba(0, 210, 255, 0.15);
-    }
-
-    /* Main Container */
-    main {
+    .hub-main {
       flex: 1;
       max-width: 860px;
       width: 100%;
@@ -171,101 +92,9 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
-      position: relative;
-      z-index: 1;
     }
 
-    /* Channel Registry Banner */
-    .channel-banner {
-      background: var(--bg-card);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-    }
-
-    .channel-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .channel-info i {
-      color: var(--accent-cyan);
-      font-size: 1.25rem;
-    }
-
-    .channel-name {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.82rem;
-      color: var(--text-main);
-      background: rgba(0, 0, 0, 0.5);
-      padding: 4px 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      font-weight: 600;
-    }
-
-    .channel-controls {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-change-channel {
-      background: linear-gradient(135deg, rgba(0, 210, 255, 0.15), rgba(58, 123, 213, 0.25));
-      border: 1px solid rgba(0, 210, 255, 0.35);
-      color: var(--accent-cyan);
-      padding: 7px 14px;
-      border-radius: 10px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-change-channel:active {
-      transform: scale(0.95);
-    }
-
-    /* Section Header */
-    .section-title {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 4px;
-    }
-
-    .section-title h2 {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .online-count {
-      background: rgba(0, 230, 118, 0.12);
-      color: var(--accent-green);
-      font-size: 0.75rem;
-      font-weight: 800;
-      padding: 4px 12px;
-      border-radius: 20px;
-      border: 1px solid rgba(0, 230, 118, 0.3);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* Device Cards */
+    /* Device Card Styles */
     .device-grid {
       display: flex;
       flex-direction: column;
@@ -273,10 +102,10 @@
     }
 
     .device-card {
-      background: var(--bg-card);
+      background: rgba(15, 22, 38, 0.75);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid var(--card-border);
+      border: 1px solid rgba(0, 210, 255, 0.15);
       border-radius: 24px;
       padding: 22px;
       position: relative;
@@ -286,7 +115,7 @@
     }
 
     .device-card:hover {
-      border-color: var(--card-border-glow);
+      border-color: rgba(0, 210, 255, 0.45);
       box-shadow: 0 18px 48px rgba(0, 210, 255, 0.18);
     }
 
@@ -297,7 +126,7 @@
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-green));
+      background: linear-gradient(90deg, #00d2ff, #9d4edd, #00e676);
     }
 
     .card-top {
@@ -324,7 +153,7 @@
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
-      color: var(--accent-cyan);
+      color: #00d2ff;
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.25);
     }
 
@@ -332,12 +161,11 @@
       font-size: 1.2rem;
       font-weight: 800;
       color: #fff;
-      letter-spacing: -0.2px;
     }
 
     .device-names p {
       font-size: 0.78rem;
-      color: var(--text-muted);
+      color: #8b949e;
       font-family: 'JetBrains Mono', monospace;
       margin-top: 2px;
     }
@@ -348,7 +176,7 @@
       gap: 6px;
       background: rgba(0, 230, 118, 0.12);
       border: 1px solid rgba(0, 230, 118, 0.3);
-      color: var(--accent-green);
+      color: #00e676;
       font-size: 0.75rem;
       font-weight: 700;
       padding: 6px 14px;
@@ -359,7 +187,7 @@
     .status-badge.syncing {
       background: rgba(255, 183, 3, 0.12);
       border-color: rgba(255, 183, 3, 0.35);
-      color: var(--accent-amber);
+      color: #ffb703;
     }
 
     .telemetry-row {
@@ -381,7 +209,7 @@
 
     .telem-label {
       font-size: 0.7rem;
-      color: var(--text-muted);
+      color: #8b949e;
       display: flex;
       align-items: center;
       gap: 5px;
@@ -390,28 +218,22 @@
       letter-spacing: 0.5px;
     }
 
-    .telem-label i {
-      color: var(--accent-cyan);
-      font-size: 0.75rem;
-    }
-
     .telem-val {
       font-size: 0.88rem;
       font-weight: 700;
-      color: var(--text-main);
+      color: #f0f6fc;
       font-family: 'JetBrains Mono', monospace;
     }
 
-    /* Primary & Secondary Action Buttons */
     .primary-action-wrap {
       display: flex;
       gap: 10px;
       margin-bottom: 10px;
     }
 
-    .btn-connect {
+    .btn-github-control {
       flex: 1;
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      background: linear-gradient(135deg, #00d2ff, #3a7bd5);
       color: #000;
       border: none;
       padding: 15px 20px;
@@ -423,37 +245,14 @@
       justify-content: center;
       gap: 8px;
       cursor: pointer;
-      text-decoration: none;
       box-shadow: 0 4px 20px rgba(0, 210, 255, 0.4);
       transition: all 0.2s;
     }
 
-    .btn-connect:active {
+    .btn-github-control:active {
       transform: scale(0.97);
-      box-shadow: 0 2px 12px rgba(0, 210, 255, 0.6);
     }
 
-    .btn-embed-mirror {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: var(--text-main);
-      padding: 15px 18px;
-      border-radius: 14px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-embed-mirror:active {
-      background: rgba(255, 255, 255, 0.18);
-    }
-
-    /* Secondary Fast-Action Pill Row */
     .secondary-pills-row {
       display: flex;
       flex-wrap: wrap;
@@ -463,7 +262,7 @@
     .action-pill {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      color: var(--text-muted);
+      color: #8b949e;
       padding: 7px 12px;
       border-radius: 10px;
       font-size: 0.78rem;
@@ -479,16 +278,16 @@
     .action-pill:hover, .action-pill:active {
       background: rgba(0, 210, 255, 0.12);
       border-color: rgba(0, 210, 255, 0.3);
-      color: var(--text-main);
+      color: #fff;
     }
 
     .action-pill i {
-      color: var(--accent-cyan);
+      color: #00d2ff;
     }
 
     /* Radar Empty State */
     .empty-state {
-      background: var(--bg-card);
+      background: rgba(15, 22, 38, 0.75);
       backdrop-filter: blur(16px);
       border: 1px dashed rgba(0, 210, 255, 0.25);
       border-radius: 22px;
@@ -532,487 +331,436 @@
       height: 54px;
       border-radius: 50%;
       background: linear-gradient(135deg, rgba(0, 210, 255, 0.2), rgba(58, 123, 213, 0.3));
-      border: 1px solid var(--accent-cyan);
+      border: 1px solid #00d2ff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.4rem;
-      color: var(--accent-cyan);
+      color: #00d2ff;
       box-shadow: 0 0 20px rgba(0, 210, 255, 0.35);
       z-index: 2;
     }
 
-    .empty-state h3 {
-      font-size: 1.25rem;
-      font-weight: 800;
-      color: #fff;
+    .radar-dot {
+      width: 8px;
+      height: 8px;
+      background: #00e676;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #00e676;
+      animation: radarPulse 2s infinite ease-in-out;
     }
 
-    .empty-state p {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      max-width: 440px;
-      line-height: 1.6;
+    .radar-dot.syncing {
+      background: #ffb703;
+      box-shadow: 0 0 10px #ffb703;
     }
 
-    .code-chip {
-      background: rgba(0, 0, 0, 0.6);
-      color: var(--accent-cyan);
-      font-family: 'JetBrains Mono', monospace;
-      padding: 8px 16px;
+    @keyframes radarPulse {
+      0% { transform: scale(0.8); opacity: 0.6; }
+      50% { transform: scale(1.4); opacity: 1; box-shadow: 0 0 16px currentColor; }
+      100% { transform: scale(0.8); opacity: 0.6; }
+    }
+
+    /* Back to Devices Switcher Button on Controller Topbar */
+    .btn-top-device {
+      background: rgba(0, 210, 255, 0.15);
+      border: 1px solid rgba(0, 210, 255, 0.35);
+      color: #00d2ff;
+      padding: 6px 12px;
       border-radius: 10px;
-      border: 1px solid rgba(0, 210, 255, 0.25);
-      font-size: 0.85rem;
-      font-weight: 600;
-      box-shadow: 0 0 12px rgba(0, 210, 255, 0.15);
-    }
-
-    /* Embedded Mirror Modal */
-    #embed-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #000;
-      z-index: 1000;
-      display: none;
-      flex-direction: column;
-    }
-
-    #embed-modal.active {
-      display: flex;
-    }
-
-    .embed-header {
-      background: #0a0e17;
-      padding: 12px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .embed-iframe {
-      flex: 1;
-      border: none;
-      width: 100%;
-      height: 100%;
-    }
-
-    .btn-close-embed {
-      background: rgba(255, 71, 87, 0.15);
-      border: 1px solid rgba(255, 71, 87, 0.35);
-      color: var(--danger);
-      padding: 6px 14px;
-      border-radius: 10px;
-      cursor: pointer;
+      font-size: 0.78rem;
       font-weight: 700;
-      font-size: 0.85rem;
-    }
-
-    /* Modals & Popups */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      padding: 20px;
-    }
-
-    .modal-overlay.active {
-      display: flex;
-    }
-
-    .modal-card {
-      background: #0f1626;
-      border: 1px solid rgba(0, 210, 255, 0.3);
-      border-radius: 20px;
-      max-width: 420px;
-      width: 100%;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-    }
-
-    .modal-card h3 {
-      font-size: 1.15rem;
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .modal-card input {
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 12px 14px;
-      border-radius: 12px;
-      color: #fff;
-      font-size: 0.95rem;
-      outline: none;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .modal-card input:focus {
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 12px rgba(0, 210, 255, 0.3);
-    }
-
-    .modal-btn-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-modal {
-      flex: 1;
-      padding: 12px;
-      border-radius: 12px;
-      font-weight: 800;
+      gap: 6px;
       cursor: pointer;
-      border: none;
-      font-size: 0.9rem;
-    }
-
-    .btn-modal-cancel {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-main);
-    }
-
-    .btn-modal-save {
-      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-      color: #000;
-    }
-
-    /* QR Code Display in Modal */
-    #qr-container {
-      display: flex;
-      justify-content: center;
-      padding: 16px;
-      background: #0a0e17;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    #qr-container canvas, #qr-container img {
-      border-radius: 8px;
-    }
-
-    /* Toast Notification */
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: rgba(15, 22, 38, 0.95);
-      border: 1px solid var(--accent-cyan);
-      color: #fff;
-      padding: 10px 22px;
-      border-radius: 30px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 210, 255, 0.3);
-      z-index: 3000;
-      pointer-events: none;
-      transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    #toast.show {
-      transform: translateX(-50%) translateY(0);
-    }
-
-    /* Troubleshooting Accordion */
-    .help-section {
-      background: var(--bg-card);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 18px;
-      overflow: hidden;
-    }
-
-    .help-header {
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .help-header h4 {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .help-content {
-      padding: 0 18px 16px;
-      display: none;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      line-height: 1.6;
-    }
-
-    .help-content.active {
-      display: block;
-    }
-
-    .help-item {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .help-item strong {
-      color: var(--text-main);
-      display: block;
-      margin-bottom: 2px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Header -->
-  <header>
-    <div class="brand">
-      <div class="brand-icon"><i class="fa-solid fa-satellite-dish"></i></div>
-      <div class="brand-text">
-        <h1>24/7 Remote Hub</h1>
-        <p><span class="radar-dot" id="header-radar"></span> Live Device Registry</p>
-      </div>
-    </div>
-    <div class="header-actions">
-      <button class="btn-icon-top" id="btn-refresh-devices" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
-      <button class="btn-icon-top" id="btn-open-settings" title="Settings"><i class="fa-solid fa-gear"></i></button>
-    </div>
-  </header>
-
-  <!-- Main View -->
-  <main>
-    <!-- Channel Registry Banner -->
-    <div class="channel-banner">
-      <div class="channel-info">
-        <i class="fa-solid fa-cloud"></i>
-        <div>
-          <span style="font-size:0.72rem; color:var(--text-muted); display:block; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Registry Channel:</span>
-          <span class="channel-name" id="current-channel-label">praashu-remote-portal-247</span>
+  <!-- ================= DEVICE REGISTRY OVERLAY (DISCOVER ONLINE COMPUTERS) ================= -->
+  <div id="device-hub-overlay" class="hub-overlay">
+    <header class="hub-header">
+      <div class="hub-brand">
+        <div class="hub-brand-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+        <div class="hub-brand-text">
+          <h1>Laptop Remote Hub</h1>
+          <p><span class="radar-dot" id="hub-radar"></span> 24/7 Cloud Registry</p>
         </div>
       </div>
-      <div class="channel-controls">
-        <button class="btn-change-channel" id="btn-edit-channel">Change</button>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-icon" id="btn-refresh-hub" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
       </div>
-    </div>
+    </header>
 
-    <!-- Active Devices Header -->
-    <div class="section-title">
-      <h2><i class="fa-solid fa-laptop"></i> Online Computers</h2>
-      <span class="online-count" id="online-count-badge">0 Online</span>
-    </div>
-
-    <!-- Device List Container -->
-    <div class="device-grid" id="devices-container">
-      <div class="empty-state">
-        <div class="empty-radar-wrap">
-          <div class="radar-ring"></div>
-          <div class="radar-ring"></div>
-          <div class="radar-center-icon"><i class="fa-solid fa-wifi"></i></div>
-        </div>
-        <h3>Scanning for Online Laptops...</h3>
-        <p>Run <b>START_REMOTE_24_7.bat</b> on any computer. Its live mirror link will automatically broadcast here in real time!</p>
-        <div class="code-chip">START_REMOTE_24_7.bat</div>
+    <main class="hub-main">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 style="font-size:0.95rem; font-weight:700; color:#8b949e; text-transform:uppercase; letter-spacing:1px;">
+          <i class="fa-solid fa-laptop"></i> Online Computers
+        </h2>
+        <span class="status-badge" id="hub-online-count">0 Online</span>
       </div>
-    </div>
 
-    <!-- Edge Health & Troubleshooting Guide -->
-    <div class="help-section">
-      <div class="help-header" id="help-toggle">
-        <h4><i class="fa-solid fa-circle-question" style="color:var(--accent-cyan)"></i> Connection Guide & Edge Diagnosis</h4>
-        <i class="fa-solid fa-chevron-down" id="help-chevron" style="color:var(--text-muted); font-size:0.8rem;"></i>
-      </div>
-      <div class="help-content" id="help-body">
-        <div class="help-item">
-          <strong>Why do I see Cloudflare Error 1033 on first launch?</strong>
-          Cloudflare's Anycast Edge Network takes approximately 5–10 seconds to propagate new ephemeral DNS routes worldwide. If you tap within the first few seconds of PC startup, wait 5 seconds and tap Refresh!
-        </div>
-        <div class="help-item">
-          <strong>Local Wi-Fi Direct Mode (Zero Lag):</strong>
-          If your phone and laptop are connected to the same Wi-Fi network, tap <b>📶 Local Wi-Fi</b> on the computer card to bypass Cloudflare completely for instantaneous 60 FPS response!
-        </div>
-        <div class="help-item">
-          <strong>Immortal 24/7 Resilience:</strong>
-          Free quick tunnels auto-refresh every ~75 minutes before Cloudflare edge evicts the session. The Hub auto-detects stalled retries and re-announces the fresh link right here automatically!
+      <div class="device-grid" id="hub-devices-container">
+        <div class="empty-state">
+          <div class="empty-radar-wrap">
+            <div class="radar-ring"></div>
+            <div class="radar-ring"></div>
+            <div class="radar-center-icon"><i class="fa-solid fa-wifi"></i></div>
+          </div>
+          <h3 style="font-size:1.25rem; font-weight:800; color:#fff;">Scanning for Online Laptops...</h3>
+          <p style="font-size:0.88rem; color:#8b949e; max-width:440px; line-height:1.6;">
+            Run <b>START_REMOTE_24_7.bat</b> on any PC. Its live mirror link will automatically broadcast here in real time!
+          </p>
+          <div style="background:rgba(0,0,0,0.6); color:#00d2ff; font-family:'JetBrains Mono',monospace; padding:8px 16px; border-radius:10px; border:1px solid rgba(0,210,255,0.25); font-size:0.85rem; font-weight:600;">
+            START_REMOTE_24_7.bat
+          </div>
         </div>
       </div>
-    </div>
-  </main>
-
-  <!-- Fullscreen Embedded Mirror Modal -->
-  <div id="embed-modal">
-    <div class="embed-header">
-      <span id="embed-title" style="font-weight:700; font-size:0.9rem; color:#fff;">Remote Desktop Stream</span>
-      <button class="btn-close-embed" id="btn-close-embed"><i class="fa-solid fa-xmark"></i> Close</button>
-    </div>
-    <iframe id="embed-iframe" class="embed-iframe" src="about:blank" allow="fullscreen; clipboard-read; clipboard-write; autoplay"></iframe>
+    </main>
   </div>
 
-  <!-- QR Code Modal -->
-  <div class="modal-overlay" id="qr-modal">
-    <div class="modal-card">
-      <h3><i class="fa-solid fa-qrcode" style="color:var(--accent-cyan)"></i> Direct Connect QR</h3>
-      <p style="font-size:0.85rem; color:var(--text-muted);" id="qr-modal-desc">Scan with another phone or camera to mirror instantly.</p>
-      <div id="qr-container"></div>
-      <button class="btn-modal btn-modal-cancel" id="btn-close-qr">Close</button>
+  <!-- ================= PIN AUTH MODAL ================= -->
+  <div id="auth-modal" class="modal-overlay hidden">
+    <div class="glass-card auth-card">
+      <div class="auth-icon"><i class="fa-solid fa-laptop-code"></i></div>
+      <h2>Laptop Remote Hub</h2>
+      <p id="auth-prompt-text">Enter Security PIN to connect</p>
+      <div class="pin-inputs">
+        <input type="password" id="pin-input" maxlength="8" placeholder="••••" inputmode="numeric" autofocus>
+      </div>
+      <button id="btn-login" class="btn btn-primary"><i class="fa-solid fa-lock-open"></i> Connect</button>
+      <div id="auth-error" class="error-msg"></div>
     </div>
   </div>
 
-  <!-- Channel Settings Modal -->
-  <div class="modal-overlay" id="channel-modal">
-    <div class="modal-card">
-      <h3><i class="fa-solid fa-key" style="color:var(--accent-cyan)"></i> Registry Channel Key</h3>
-      <p style="font-size:0.85rem; color:var(--text-muted);">Set the secret channel used by your computers to publish their live links.</p>
-      <input type="text" id="channel-input" placeholder="e.g. praashu-remote-portal-247">
-      <div class="modal-btn-row">
-        <button class="btn-modal btn-modal-cancel" id="btn-cancel-modal">Cancel</button>
-        <button class="btn-modal btn-modal-save" id="btn-save-modal">Save & Sync</button>
+  <!-- ================= MAIN CONTROLLER APPLICATION ================= -->
+  <div id="app-container" class="app-container hidden">
+    <!-- Top Header & Live Telemetry -->
+    <header class="top-bar">
+      <button class="btn-top-device" id="btn-show-devices" title="Switch PC">
+        <i class="fa-solid fa-laptop"></i> <span id="active-device-name">My PC</span>
+      </button>
+      <button class="btn-top-win" id="btn-top-win" onclick="sendKeyPress('win')" title="Toggle Windows Start Menu">
+        <i class="fa-brands fa-windows"></i> <span>Start</span>
+      </button>
+      <div class="status-pill" id="srm-status">
+        <span class="dot green"></span>
+        <span class="label" id="wifi-label">Connected</span>
+      </div>
+      <div class="telemetry">
+        <span id="bat-indicator"><i class="fa-solid fa-battery-half"></i> <span id="bat-val">--%</span></span>
+        <span id="cpu-indicator"><i class="fa-solid fa-microchip"></i> <span id="cpu-val">--%</span></span>
+      </div>
+    </header>
+
+    <!-- Global Floating Live Typing Bar -->
+    <div id="global-typing-bar" class="global-typing-bar">
+      <div class="type-input-wrap">
+        <input type="text" id="live-typing-box" placeholder="Tap to open phone keyboard & type live..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="quick-type-actions">
+        <button class="mini-btn mini-btn-win" id="btn-quick-win" onclick="sendKeyPress('win')"><i class="fa-brands fa-windows"></i> Win</button>
+        <button class="mini-btn" id="btn-quick-esc">Esc</button>
+        <button class="mini-btn" id="btn-quick-tab">Tab</button>
+        <button class="mini-btn" id="btn-quick-bs">⌫</button>
+        <button class="mini-btn mini-btn-accent" id="btn-quick-enter">↵ Enter</button>
       </div>
     </div>
+
+    <!-- Main Views Container -->
+    <main class="main-content">
+
+      <!-- 1. TOUCHPAD VIEW -->
+      <section id="view-touchpad" class="view-panel active">
+        <!-- Sensitivity & Gyro Controls Bar -->
+        <div class="mouse-top-toolbar">
+          <div class="speed-toggle-group">
+            <span class="speed-label"><i class="fa-solid fa-gauge-high"></i> Speed:</span>
+            <button class="speed-btn" data-speed="0.8">Slow</button>
+            <button class="speed-btn active" data-speed="1.4">Normal</button>
+            <button class="speed-btn" data-speed="2.2">Fast</button>
+          </div>
+          <button class="btn-gyro" id="btn-toggle-gyro"><i class="fa-solid fa-compass"></i> Air Mouse</button>
+        </div>
+
+        <div class="touchpad-wrapper">
+          <div id="touchpad-surface" class="touchpad-surface">
+            <div class="touch-hint">
+              <i class="fa-solid fa-hand-pointer"></i>
+              <span>Touch & Slide to Move Mouse<br>Tap = Left Click | 2-Finger Tap = Right Click<br>Right strip = Scroll Wheel</span>
+            </div>
+          </div>
+          <div id="scroll-strip" class="scroll-strip">
+            <i class="fa-solid fa-chevron-up"></i>
+            <span class="scroll-label">SCROLL</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+        </div>
+
+        <!-- 5-Button Mouse Action Bar -->
+        <div class="mouse-actions-bar">
+          <button class="mouse-btn" id="btn-lclick"><i class="fa-solid fa-mouse-pointer"></i> Left</button>
+          <button class="mouse-btn" id="btn-dclick"><i class="fa-solid fa-bolt"></i> 2x Click</button>
+          <button class="mouse-btn" id="btn-mclick"><i class="fa-solid fa-arrows-up-down"></i> Middle</button>
+          <button class="mouse-btn" id="btn-draglock"><i class="fa-solid fa-hand-fist"></i> Drag</button>
+          <button class="mouse-btn" id="btn-rclick"><i class="fa-regular fa-hand-point-right"></i> Right</button>
+        </div>
+      </section>
+
+      <!-- 2. LIVE SCREEN VIEW -->
+      <section id="view-screen" class="view-panel">
+        <div class="screen-controls-top">
+          <button id="btn-screen-win" class="btn-icon btn-win-accent" onclick="sendKeyPress('win')" title="Toggle Windows Start Menu"><i class="fa-brands fa-windows"></i></button>
+          
+          <div class="screen-zoom-bar">
+            <button id="btn-zoom-out" class="btn-icon btn-zoom" title="Zoom Out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <button id="btn-zoom-reset" class="btn-zoom-level" title="Reset Zoom">1.0x</button>
+            <button id="btn-zoom-in" class="btn-icon btn-zoom" title="Zoom In"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <button id="btn-zoom-fit" class="btn-icon btn-zoom" title="Fit to Screen / 100%"><i class="fa-solid fa-arrows-to-eye"></i></button>
+          </div>
+
+          <button id="btn-screen-refresh" class="btn-icon" title="Refresh Screen"><i class="fa-solid fa-rotate"></i></button>
+          <button id="btn-screen-fullscreen" class="btn-icon" title="Toggle Fullscreen"><i class="fa-solid fa-expand"></i></button>
+        </div>
+
+        <div class="screen-quality-bar">
+          <span class="quality-label"><i class="fa-solid fa-sparkles"></i> Mode:</span>
+          <div class="quality-pills">
+            <button class="quality-btn active" data-mode="ultra" title="1080p Native, Crystal Clear (Scale 1.0, Q90)">💎 Ultra HD</button>
+            <button class="quality-btn" data-mode="turbo" title="Smooth 60 FPS (Scale 0.75, Q75)">⚡ 60 FPS</button>
+            <button class="quality-btn" data-mode="balanced" title="Balanced Performance (Scale 0.65, Q55)">⚖️ Balanced</button>
+            <button class="quality-btn" data-mode="eco" title="Low Data Mode (Scale 0.50, Q40)">🔋 Eco</button>
+          </div>
+          <span class="stream-stats-badge" id="stream-stats-badge">30 FPS • WS</span>
+        </div>
+        <div class="screen-canvas-container" id="screen-container">
+          <div class="screen-transform-wrapper" id="screen-transform-wrapper">
+            <canvas id="screen-canvas"></canvas>
+          </div>
+          <div id="screen-spinner" class="spinner"></div>
+          <div id="zoom-hud" class="zoom-hud">1.0x</div>
+        </div>
+        <div class="screen-help">
+          <span>Tap = Click | Pinch or +/- to Zoom | 2-Finger Drag to Pan</span>
+        </div>
+      </section>
+
+      <!-- 3. KEYBOARD VIEW -->
+      <section id="view-keyboard" class="view-panel">
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-keyboard"></i> Live Mobile Keyboard Typing</h3>
+          <div class="type-box">
+            <input type="text" id="direct-type-input" placeholder="Type words or paste text here to send..." autocomplete="off">
+            <button id="btn-send-text" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Send</button>
+          </div>
+        </div>
+
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-clipboard"></i> Remote Clipboard Sync</h3>
+          <div class="clipboard-box">
+            <input type="text" id="clipboard-input" placeholder="Text to paste into laptop clipboard...">
+            <div class="clip-actions">
+              <button class="btn btn-ctrl" id="btn-get-clipboard"><i class="fa-solid fa-download"></i> Get PC Text</button>
+              <button class="btn btn-ctrl btn-accent" id="btn-set-clipboard"><i class="fa-solid fa-upload"></i> Set PC Text</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-arrows-up-down-left-right"></i> Navigation Keys</h3>
+          <div class="dpad-container">
+            <div></div>
+            <button class="key-btn dpad-btn" onclick="sendKeyPress('up')">▲ Up</button>
+            <div></div>
+            <button class="key-btn dpad-btn" onclick="sendKeyPress('left')">◄ Left</button>
+            <button class="key-btn dpad-btn" onclick="sendKeyPress('down')">▼ Down</button>
+            <button class="key-btn dpad-btn" onclick="sendKeyPress('right')">► Right</button>
+          </div>
+        </div>
+
+        <div class="glass-section">
+          <h3><i class="fa-brands fa-windows"></i> Windows & System Hotkeys</h3>
+          <div class="keys-grid">
+            <button class="key-btn key-btn-win" onclick="sendKeyPress('win')"><i class="fa-brands fa-windows"></i> Win</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'd'])">Win + D (Desktop)</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'tab'])">Win + Tab</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'x'])">Win + X</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'v'])">Win + V</button>
+            <button class="key-btn" onclick="sendHotkey(['alt', 'tab'])">Alt + Tab</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'c'])">Ctrl + C</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'v'])">Ctrl + V</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'z'])">Ctrl + Z</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'a'])">Ctrl + A</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 's'])">Ctrl + S</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'e'])">Win + E (Files)</button>
+            <button class="key-btn" onclick="sendHotkey(['win', 'r'])">Win + R (Run)</button>
+            <button class="key-btn" onclick="sendHotkey(['ctrl', 'shift', 'esc'])">Task Manager</button>
+            <button class="key-btn" onclick="sendKeyPress('enter')">Enter ↵</button>
+            <button class="key-btn" onclick="sendKeyPress('backspace')">Backspace ⌫</button>
+            <button class="key-btn" onclick="sendKeyPress('tab')">Tab ⇥</button>
+            <button class="key-btn" onclick="sendKeyPress('esc')">Escape</button>
+            <button class="key-btn" onclick="sendKeyPress('delete')">Delete</button>
+            <button class="key-btn" onclick="sendKeyPress('space')">Spacebar</button>
+            <button class="key-btn" onclick="sendKeyPress('f5')">F5 Refresh</button>
+            <button class="key-btn" onclick="sendKeyPress('f11')">F11 Fullscreen</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. CONTROLS VIEW -->
+      <section id="view-controls" class="view-panel">
+        <div class="glass-section">
+          <div class="app-search-header">
+            <h3><i class="fa-brands fa-windows"></i> Search & Open Apps</h3>
+            <button class="btn-win-search" onclick="sendHotkey(['win', 's'])"><i class="fa-solid fa-magnifying-glass"></i> Win Search</button>
+          </div>
+          <div class="app-search-wrap">
+            <i class="fa-solid fa-search search-icon"></i>
+            <input type="text" id="app-search-input" placeholder="Search 150+ apps (Spotify, Chrome, Steam)..." autocomplete="off">
+            <button class="btn-clear-search" id="btn-clear-app-search" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div id="app-results-container" class="app-results-grid">
+            <div class="spinner"></div>
+          </div>
+        </div>
+
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-volume-high"></i> Media & Volume</h3>
+          <div class="media-btn-row">
+            <button class="btn btn-ctrl" onclick="sendAction('vol_down')"><i class="fa-solid fa-volume-low"></i> Vol -</button>
+            <button class="btn btn-ctrl" onclick="sendAction('vol_mute')"><i class="fa-solid fa-volume-xmark"></i> Mute</button>
+            <button class="btn btn-ctrl" onclick="sendAction('vol_up')"><i class="fa-solid fa-volume-high"></i> Vol +</button>
+          </div>
+          <div class="media-btn-row" style="margin-top: 10px;">
+            <button class="btn btn-ctrl" onclick="sendAction('media_prev')"><i class="fa-solid fa-backward"></i> Prev</button>
+            <button class="btn btn-ctrl btn-accent" onclick="sendAction('media_play_pause')"><i class="fa-solid fa-play"></i> Play/Pause</button>
+            <button class="btn btn-ctrl" onclick="sendAction('media_next')"><i class="fa-solid fa-forward"></i> Next</button>
+          </div>
+        </div>
+
+        <div class="glass-section">
+          <h3><i class="fa-solid fa-power-off"></i> Power Management</h3>
+          <div class="power-btn-grid">
+            <button class="btn btn-warning" onclick="sendAction('lock_screen')"><i class="fa-solid fa-lock"></i> Lock PC</button>
+            <button class="btn btn-warning" onclick="sendAction('sleep_pc')"><i class="fa-solid fa-moon"></i> Sleep</button>
+            <button class="btn btn-danger" onclick="confirmAction('restart_pc', 'Restart Laptop?')"><i class="fa-solid fa-rotate-right"></i> Restart</button>
+            <button class="btn btn-danger" onclick="confirmAction('shutdown_pc', 'Shutdown Laptop?')"><i class="fa-solid fa-power-off"></i> Shutdown</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. TERMINAL VIEW -->
+      <section id="view-terminal" class="view-panel">
+        <div class="terminal-container">
+          <div class="terminal-header">
+            <span class="term-title"><i class="fa-solid fa-terminal"></i> PowerShell Remote Terminal</span>
+            <button class="btn-clear" id="btn-clear-term"><i class="fa-solid fa-trash"></i></button>
+          </div>
+          <div class="terminal-body" id="term-output">
+            <div class="term-line prompt-line">PowerShell Remote Console Initialized. Full Admin Access.</div>
+          </div>
+          <div class="terminal-input-bar">
+            <span class="ps-prompt">PS &gt;</span>
+            <input type="text" id="term-input" placeholder="Type PowerShell command..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <button id="btn-term-run" class="btn btn-primary"><i class="fa-solid fa-play"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. FILE EXPLORER VIEW -->
+      <section id="view-files" class="view-panel">
+        <div class="files-header">
+          <div class="breadcrumb" id="file-breadcrumb">C:\Users\Praashu</div>
+          <label class="btn-upload" for="file-upload-input"><i class="fa-solid fa-upload"></i> Upload</label>
+          <input type="file" id="file-upload-input" style="display: none;">
+        </div>
+        <div class="drive-shortcuts">
+          <button class="drive-chip" onclick="loadDirectory('C:\\Users\\Praashu')">Home</button>
+          <button class="drive-chip" onclick="loadDirectory('C:\\Users\\Praashu\\OneDrive\\Desktop')">Desktop</button>
+          <button class="drive-chip" onclick="loadDirectory('C:\\Users\\Praashu\\Downloads')">Downloads</button>
+          <button class="drive-chip" onclick="loadDirectory('C:\\Users\\Praashu\\Documents')">Documents</button>
+          <button class="drive-chip" onclick="loadDirectory('C:\\')">C:\</button>
+        </div>
+        <div class="files-list" id="files-container">
+          <div class="spinner"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-target="view-touchpad">
+        <i class="fa-solid fa-hand-pointer"></i>
+        <span>Touchpad</span>
+      </button>
+      <button class="nav-item" data-target="view-screen">
+        <i class="fa-solid fa-display"></i>
+        <span>Screen</span>
+      </button>
+      <button class="nav-item" data-target="view-keyboard">
+        <i class="fa-solid fa-keyboard"></i>
+        <span>Keys</span>
+      </button>
+      <button class="nav-item" data-target="view-controls">
+        <i class="fa-solid fa-sliders"></i>
+        <span>Controls</span>
+      </button>
+      <button class="nav-item" data-target="view-terminal">
+        <i class="fa-solid fa-terminal"></i>
+        <span>Terminal</span>
+      </button>
+      <button class="nav-item" data-target="view-files">
+        <i class="fa-solid fa-folder"></i>
+        <span>Files</span>
+      </button>
+    </nav>
   </div>
 
-  <!-- Toast Notification -->
-  <div id="toast"><i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i> <span id="toast-text">Link copied!</span></div>
+  <script src="app.js"></script>
 
+  <!-- Integrated GitHub Pages Hub & Auto-Discovery Script -->
   <script>
-    const DEFAULT_CHANNEL = "praashu-remote-portal-247";
-    let currentChannel = localStorage.getItem("remote_hub_channel") || DEFAULT_CHANNEL;
-    let knownDevices = new Map();
+    const HUB_CHANNEL = "praashu-remote-portal-247";
+    let hubDevices = new Map();
 
-    const devicesContainer = document.getElementById("devices-container");
-    const onlineBadge = document.getElementById("online-count-badge");
-    const channelLabel = document.getElementById("current-channel-label");
-    const btnRefresh = document.getElementById("btn-refresh-devices");
-    const btnEditChannel = document.getElementById("btn-edit-channel");
-    const btnOpenSettings = document.getElementById("btn-open-settings");
-    const channelModal = document.getElementById("channel-modal");
-    const channelInput = document.getElementById("channel-input");
-    const btnCancelModal = document.getElementById("btn-cancel-modal");
-    const btnSaveModal = document.getElementById("btn-save-modal");
-    const toast = document.getElementById("toast");
-    const toastText = document.getElementById("toast-text");
+    const hubOverlay = document.getElementById("device-hub-overlay");
+    const hubContainer = document.getElementById("hub-devices-container");
+    const hubOnlineCount = document.getElementById("hub-online-count");
+    const btnRefreshHub = document.getElementById("btn-refresh-hub");
+    const btnShowDevices = document.getElementById("btn-show-devices");
+    const activeDeviceName = document.getElementById("active-device-name");
 
-    const embedModal = document.getElementById("embed-modal");
-    const embedIframe = document.getElementById("embed-iframe");
-    const embedTitle = document.getElementById("embed-title");
-    const btnCloseEmbed = document.getElementById("btn-close-embed");
-
-    const qrModal = document.getElementById("qr-modal");
-    const qrContainer = document.getElementById("qr-container");
-    const btnCloseQr = document.getElementById("btn-close-qr");
-
-    const helpToggle = document.getElementById("help-toggle");
-    const helpBody = document.getElementById("help-body");
-    const helpChevron = document.getElementById("help-chevron");
-
-    channelLabel.textContent = currentChannel;
-
-    helpToggle.addEventListener("click", () => {
-      helpBody.classList.toggle("active");
-      helpChevron.classList.toggle("fa-chevron-up");
-      helpChevron.classList.toggle("fa-chevron-down");
+    btnShowDevices.addEventListener("click", () => {
+      hubOverlay.classList.remove("hidden");
     });
 
-    function showToast(msg) {
-      toastText.textContent = msg;
-      toast.classList.add("show");
-      try { navigator.vibrate(20); } catch(e) {}
-      setTimeout(() => toast.classList.remove("show"), 2500);
-    }
-
-    function isValidPublicUrl(url) {
+    function isValidTarget(url) {
       if (!url) return false;
       if (url.includes("test-tunnel") || url.includes("example.com")) return false;
-      if (url.startsWith("https://") || url.startsWith("http://")) return true;
-      return false;
+      return url.startsWith("https://") || url.startsWith("http://");
     }
 
-    function openChannelSettings() {
-      channelInput.value = currentChannel;
-      channelModal.classList.add("active");
+    function selectDeviceAndControl(dev) {
+      const target = dev.public_url || dev.local_url;
+      const pin = dev.pin || "1234";
+
+      setBackendTarget(target);
+      activeDeviceName.textContent = dev.device_name || "Laptop";
+      hubOverlay.classList.add("hidden");
+
+      // Auto-connect with device pin
+      currentPin = pin;
+      pinInput.value = pin;
+      attemptConnect(pin);
     }
 
-    btnEditChannel.addEventListener("click", openChannelSettings);
-    btnOpenSettings.addEventListener("click", openChannelSettings);
-    btnCancelModal.addEventListener("click", () => channelModal.classList.remove("active"));
-    btnSaveModal.addEventListener("click", () => {
-      const val = channelInput.value.trim();
-      if (val) {
-        currentChannel = val;
-        localStorage.setItem("remote_hub_channel", currentChannel);
-        channelLabel.textContent = currentChannel;
-        knownDevices.clear();
-        channelModal.classList.remove("active");
-        connectRegistryStream();
-      }
-    });
-
-    btnCloseEmbed.addEventListener("click", () => {
-      embedIframe.src = "about:blank";
-      embedModal.classList.remove("active");
-    });
-
-    btnCloseQr.addEventListener("click", () => {
-      qrModal.classList.remove("active");
-    });
-
-    function copyToClipboard(text, label) {
-      navigator.clipboard.writeText(text).then(() => {
-        showToast(`${label} copied to clipboard!`);
-      }).catch(() => {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        showToast(`${label} copied!`);
-      });
-    }
-
-    function showQrForUrl(url, name) {
-      qrContainer.innerHTML = "";
-      new QRCode(qrContainer, {
-        text: url,
-        width: 220,
-        height: 220,
-        colorDark: "#00d2ff",
-        colorLight: "#0a0e17",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-      document.getElementById("qr-modal-desc").textContent = `Scan to connect directly to ${name}`;
-      qrModal.classList.add("active");
-    }
-
-    async function pollRegistry() {
+    async function pollHubDevices() {
       try {
-        const url = `https://ntfy.sh/${currentChannel}/json?poll=1`;
-        const res = await fetch(url);
+        const res = await fetch(`https://ntfy.sh/${HUB_CHANNEL}/json?poll=1`);
         if (!res.ok) return;
-
         const text = await res.text();
         const lines = text.split("\n").filter(l => l.trim().length > 0);
         const now = Math.floor(Date.now() / 1000);
@@ -1022,64 +770,62 @@
             const item = JSON.parse(line);
             if (item.event === "message" && item.message) {
               const data = JSON.parse(item.message);
-              if (data.device_id && (isValidPublicUrl(data.public_url) || isValidPublicUrl(data.local_url))) {
+              if (data.device_id && (isValidTarget(data.public_url) || isValidTarget(data.local_url))) {
                 const age = now - (data.timestamp || item.time || 0);
                 if (age < 14400) {
-                  knownDevices.set(data.device_id, data);
+                  hubDevices.set(data.device_id, data);
                 }
               }
             }
           } catch(e) {}
         });
 
-        renderDevices();
+        renderHubDevices();
       } catch (err) {
-        console.warn("Registry poll error:", err);
+        console.warn("Hub poll error:", err);
       }
     }
 
-    function renderDevices() {
-      const devices = Array.from(knownDevices.values());
+    function renderHubDevices() {
+      const devices = Array.from(hubDevices.values());
       const now = Math.floor(Date.now() / 1000);
+      const active = devices.filter(d => isValidTarget(d.public_url) || isValidTarget(d.local_url))
+                            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-      const validDevices = devices.filter(d => isValidPublicUrl(d.public_url) || isValidPublicUrl(d.local_url));
-      const activeDevices = validDevices.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      hubOnlineCount.textContent = `${active.length} Online`;
 
-      onlineBadge.textContent = `${activeDevices.length} Online`;
-
-      if (activeDevices.length === 0) {
-        devicesContainer.innerHTML = `
+      if (active.length === 0) {
+        hubContainer.innerHTML = `
           <div class="empty-state">
             <div class="empty-radar-wrap">
               <div class="radar-ring"></div>
               <div class="radar-ring"></div>
               <div class="radar-center-icon"><i class="fa-solid fa-wifi"></i></div>
             </div>
-            <h3>Waiting for Laptops to Connect...</h3>
-            <p>Run <b>START_REMOTE_24_7.bat</b> on any PC. Its live mirror link will automatically broadcast here in real time!</p>
-            <div class="code-chip">START_REMOTE_24_7.bat</div>
+            <h3 style="font-size:1.25rem; font-weight:800; color:#fff;">Scanning for Online Laptops...</h3>
+            <p style="font-size:0.88rem; color:#8b949e; max-width:440px; line-height:1.6;">
+              Run <b>START_REMOTE_24_7.bat</b> on any PC. It will automatically show up here for 1-click remote control directly from GitHub!
+            </p>
+            <div style="background:rgba(0,0,0,0.6); color:#00d2ff; font-family:'JetBrains Mono',monospace; padding:8px 16px; border-radius:10px; border:1px solid rgba(0,210,255,0.25); font-size:0.85rem; font-weight:600;">
+              START_REMOTE_24_7.bat
+            </div>
           </div>
         `;
         return;
       }
 
       let html = "";
-      activeDevices.forEach(dev => {
+      active.forEach(dev => {
         const pin = dev.pin || "1234";
-        const targetUrl = dev.connect_url || (dev.public_url ? `${dev.public_url}?pin=${pin}` : `${dev.local_url}?pin=${pin}`);
-        const localTargetUrl = dev.local_url ? `${dev.local_url}?pin=${pin}` : "";
+        const primaryUrl = dev.public_url || dev.local_url;
+        const targetConnectUrl = primaryUrl ? (primaryUrl.includes("?pin=") ? primaryUrl : `${primaryUrl}?pin=${pin}`) : "";
+        const localConnectUrl = dev.local_url ? (dev.local_url.includes("?pin=") ? dev.local_url : `${dev.local_url}?pin=${pin}`) : "";
         const res = dev.resolution || "1920x1080";
         const bat = dev.battery || "100%";
         const plugged = dev.power_plugged;
-        const batIcon = plugged ? '<i class="fa-solid fa-bolt" style="color:var(--accent-amber)"></i> ' : '<i class="fa-solid fa-battery-half"></i> ';
+        const batIcon = plugged ? '<i class="fa-solid fa-bolt" style="color:#ffb703"></i> ' : '<i class="fa-solid fa-battery-half"></i> ';
         const ageSec = Math.max(0, now - (dev.timestamp || now));
         const timeAgo = ageSec < 60 ? `${ageSec}s ago` : `${Math.floor(ageSec / 60)}m ago`;
-
-        // Check if tunnel is in edge DNS propagation settling phase (< 12 seconds)
-        const isSyncing = ageSec < 12 && dev.public_url;
-        const statusBadge = isSyncing 
-          ? `<div class="status-badge syncing"><span class="radar-dot syncing"></span> Edge Syncing (${Math.max(1, 12 - ageSec)}s)</div>`
-          : `<div class="status-badge"><span class="radar-dot"></span> Live (${timeAgo})</div>`;
 
         html += `
           <div class="device-card">
@@ -1091,7 +837,7 @@
                   <p>ID: ${dev.device_id}</p>
                 </div>
               </div>
-              ${statusBadge}
+              <div class="status-badge"><span class="radar-dot"></span> Live (${timeAgo})</div>
             </div>
 
             <div class="telemetry-row">
@@ -1109,91 +855,73 @@
               </div>
             </div>
 
-            <!-- Primary Direct Connect Buttons -->
+            <!-- Primary Action: Control Directly Here on GitHub -->
             <div class="primary-action-wrap">
-              <a href="${targetUrl}" target="_blank" class="btn-connect" onclick="showToast('Connecting 60 FPS Mirror...')">
-                <i class="fa-solid fa-bolt"></i> ⚡ Connect & Mirror (60 FPS Ultra HD)
-              </a>
-              <button class="btn-embed-mirror" onclick="openEmbeddedMirror('${targetUrl}', '${dev.device_name}')" title="Open Fullscreen in Portal">
-                <i class="fa-solid fa-window-maximize"></i>
+              <button class="btn-github-control" onclick='selectDeviceAndControl(${JSON.stringify(dev)})'>
+                <i class="fa-solid fa-gamepad"></i> ⚡ Control from GitHub (60 FPS Ultra HD)
               </button>
             </div>
 
-            <!-- Secondary Fast Action Pills -->
+            <!-- Secondary Actions: Direct Link & Wi-Fi -->
             <div class="secondary-pills-row">
-              ${localTargetUrl ? `
-                <a href="${localTargetUrl}" target="_blank" class="action-pill" title="Zero Internet Lag (Same Wi-Fi)">
-                  <i class="fa-solid fa-wifi"></i> 📶 Local Wi-Fi Direct
-                </a>
+              ${localConnectUrl ? `
+                <button class="action-pill" onclick='selectDeviceAndControl(${JSON.stringify({...dev, public_url: dev.local_url})})'>
+                  <i class="fa-solid fa-wifi"></i> 📶 Local Wi-Fi (0ms)
+                </button>
               ` : ''}
-              <button class="action-pill" onclick="showQrForUrl('${targetUrl}', '${dev.device_name}')">
-                <i class="fa-solid fa-qrcode"></i> QR Code
-              </button>
-              <button class="action-pill" onclick="copyToClipboard('${targetUrl}', 'Global HTTPS Link')">
-                <i class="fa-solid fa-copy"></i> Copy Link
-              </button>
+              <a href="${targetConnectUrl}" target="_blank" class="action-pill">
+                <i class="fa-solid fa-up-right-from-square"></i> Open in New Tab
+              </a>
             </div>
           </div>
         `;
       });
 
-      devicesContainer.innerHTML = html;
+      hubContainer.innerHTML = html;
     }
 
-    function openEmbeddedMirror(url, name) {
-      embedTitle.textContent = `💻 Remote Desktop — ${name}`;
-      embedIframe.src = url;
-      embedModal.classList.add("active");
-    }
+    // Connect real-time Server-Sent Events (SSE)
+    try {
+      const sse = new EventSource(`https://ntfy.sh/${HUB_CHANNEL}/sse`);
+      sse.onmessage = (e) => {
+        try {
+          const item = JSON.parse(e.data);
+          if (item.event === "message" && item.message) {
+            const data = JSON.parse(item.message);
+            if (data.device_id && (isValidTarget(data.public_url) || isValidTarget(data.local_url))) {
+              hubDevices.set(data.device_id, data);
+              renderHubDevices();
 
-    let eventSource = null;
-
-    function connectRegistryStream() {
-      if (eventSource) {
-        try { eventSource.close(); } catch(e) {}
-      }
-
-      // Initial quick snapshot poll
-      pollRegistry();
-
-      // Real-time persistent SSE stream
-      try {
-        eventSource = new EventSource(`https://ntfy.sh/${currentChannel}/sse`);
-        
-        eventSource.onmessage = (e) => {
-          try {
-            const item = JSON.parse(e.data);
-            if (item.event === "message" && item.message) {
-              const data = JSON.parse(item.message);
-              if (data.device_id && (isValidPublicUrl(data.public_url) || isValidPublicUrl(data.local_url))) {
-                knownDevices.set(data.device_id, data);
-                renderDevices();
+              // If currently controlling this device and the tunnel URL rotated, hot-update target
+              if (backendBaseUrl && data.public_url && backendBaseUrl !== data.public_url) {
+                console.log("[RemoteHub] Hot-updating tunnel URL to:", data.public_url);
+                setBackendTarget(data.public_url);
+                if (isConnected) {
+                  attemptConnect(currentPin);
+                }
               }
             }
-          } catch(err) {}
-        };
-
-        eventSource.onerror = () => {
-          // SSE retry handled automatically by browser
-        };
-      } catch(e) {
-        console.warn("SSE error, falling back to timer:", e);
-      }
+          }
+        } catch(err) {}
+      };
+    } catch(e) {
+      console.warn("SSE registry init note:", e);
     }
 
-    // Connect SSE stream on startup
-    connectRegistryStream();
+    pollHubDevices();
+    setInterval(renderHubDevices, 8000);
 
-    // Gentle heartbeat refresh every 6s
-    setInterval(renderDevices, 6000);
-
-    btnRefresh.addEventListener("click", () => {
-      btnRefresh.querySelector("i").classList.add("fa-spin");
-      pollRegistry().then(() => {
-        setTimeout(() => btnRefresh.querySelector("i").classList.remove("fa-spin"), 500);
+    btnRefreshHub.addEventListener("click", () => {
+      btnRefreshHub.querySelector("i").classList.add("fa-spin");
+      pollHubDevices().then(() => {
+        setTimeout(() => btnRefreshHub.querySelector("i").classList.remove("fa-spin"), 500);
       });
-      showToast("Refreshed device registry");
     });
+
+    // If URL has direct target parameter, auto-connect immediately
+    if (targetFromUrl) {
+      hubOverlay.classList.add("hidden");
+    }
   </script>
 </body>
 </html>
