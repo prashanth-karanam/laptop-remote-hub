@@ -79,6 +79,13 @@ def broadcast_beacon(public_url: str, local_url: str, pin: str = "1234"):
     channel = get_portal_channel()
     dev = get_device_info()
 
+    target_clean = public_url or local_url
+    if target_clean:
+        if "?pin=" not in target_clean:
+            target_clean = f"{target_clean}?pin={pin}"
+    else:
+        target_clean = ""
+
     payload = {
         "event": "hub_beacon",
         "device_id": dev["device_id"],
@@ -92,7 +99,7 @@ def broadcast_beacon(public_url: str, local_url: str, pin: str = "1234"):
         "cpu": f"{dev['cpu_pct']}%",
         "status": "ready" if public_url else "lan_only",
         "timestamp": int(time.time()),
-        "connect_url": f"{public_url or local_url}?pin={pin}"
+        "connect_url": target_clean
     }
 
     # 1. Broadcast to ntfy.sh channel with JSON message
